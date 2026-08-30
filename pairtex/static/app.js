@@ -67,12 +67,16 @@ function openEntryDialog(kind) {
   if (!state.selection) return;
   state.kind = kind;
   $("#dialog-kind").textContent = kind === "change" ? "Change proposal" : "Comment";
-  $("#dialog-title").textContent = state.mode === "edit" && kind === "change" ? "Edit manuscript" : "Add feedback";
-  $("#message-label").textContent = kind === "change" ? "Instruction" : "Comment";
+  $("#dialog-title").textContent = kind === "change"
+    ? (state.mode === "edit" ? "Edit manuscript" : "Propose an edit")
+    : "Add comment";
+  $("#message-label").textContent = kind === "change" ? "Additional instructions (optional)" : "Comment";
   $("#dialog-quote").textContent = `“${state.selection.selected_rendered_text}”`;
   $("#change-label").hidden = kind !== "change";
   $("#message").value = "";
-  $("#proposed-text").value = "";
+  $("#message").required = kind !== "change";
+  $("#proposed-text").value = kind === "change" ? state.selection.selected_rendered_text : "";
+  $("#proposed-text").required = kind === "change";
   $("#entry-dialog").showModal();
 }
 
@@ -93,7 +97,7 @@ async function saveEntry(event) {
     anchor: state.selection,
     payload: kind === "change" ? {
       operation: "replace",
-      instruction: $("#message").value.trim(),
+      instruction: $("#message").value.trim() || undefined,
       proposed_content: $("#proposed-text").value.trim(),
     } : { comment: $("#message").value.trim() },
     created_at: new Date().toISOString(),
