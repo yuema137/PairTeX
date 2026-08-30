@@ -125,6 +125,7 @@ async function init() {
     if (action) openEntryDialog(action === "change" ? "change" : "comment");
   });
   $("#entry-form").addEventListener("submit", saveEntry);
+  $("#cancel-entry").addEventListener("click", () => $("#entry-dialog").close());
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     state.mode = button.dataset.mode;
     document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item === button));
