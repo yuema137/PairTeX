@@ -20,9 +20,12 @@ existing LaTeX repository
     -> versioned feedback entries
 ```
 
-The MVP targets a single local repository first. Multiple people can use the
-same workflow through Git: each person runs PairTeX locally and synchronizes
-the repository, including feedback entries, with normal Git operations.
+The MVP will be validated against the Siderius paper, but PairTeX must remain
+fully independent of that project. Siderius is an external pilot fixture, not
+a runtime dependency, source dependency, bundled asset, or special-case
+integration. Multiple people can use the same workflow through Git: each
+person runs PairTeX locally and synchronizes the target repository, including
+feedback entries, with normal Git operations.
 
 ## Version boundary
 
@@ -65,6 +68,10 @@ The implementation should keep replaceable concerns behind small boundaries:
 The first implementation should use local files and the existing project
 tooling. These boundaries are extension points, not invitations to build a
 framework before the pilot demonstrates a need.
+
+PairTeX must not hard-code Siderius paths, manuscript names, shared assets,
+build assumptions, or repository conventions. Project-specific behavior belongs
+in user-provided configuration or a generic adapter contract.
 
 ## Entry location model
 
@@ -114,5 +121,5 @@ design tokens.
 - the minimum source mapping metadata available from the selected renderer;
 - the precise Edit-mode behavior.
 
-These decisions should be made against the Siderius repository rather than an
-abstract arbitrary-LaTeX test case.
+These decisions should be tested against the Siderius repository as a real
+pilot, while keeping the resulting implementation project-agnostic.
