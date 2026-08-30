@@ -79,6 +79,8 @@ class App:
         directory = self.project / ".pairtex" / "feedback"
         directory.mkdir(parents=True, exist_ok=True)
         entry_id = str(entry.get("id") or uuid.uuid4().hex)
+        if Path(entry_id).name != entry_id:
+            raise ValueError("invalid entry id")
         entry["id"] = entry_id
         path = directory / f"{entry_id}.json"
         path.write_text(
@@ -86,6 +88,12 @@ class App:
             encoding="utf-8",
         )
         return entry
+
+    def delete_entry(self, entry_id: str) -> None:
+        if Path(entry_id).name != entry_id:
+            raise ValueError("invalid entry id")
+        path = self.project / ".pairtex" / "feedback" / f"{entry_id}.json"
+        path.unlink()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -132,6 +140,41 @@ class Handler(BaseHTTPRequestHandler):
             return
         body = json.dumps(saved, ensure_ascii=False).encode("utf-8")
         self.send_bytes(body, "application/json; charset=utf-8", HTTPStatus.CREATED)
+
+    def do_PUT(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        prefix = "/api/entries/"
+        if not path.startswith(prefix):
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        entry_id = path[len(prefix):]
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            entry = json.loads(self.rfile.read(length))
+            if not isinstance(entry, dict):
+                raise ValueError("entry must be an object")
+            entry["id"] = entry_id
+            saved = self.app.save_entry(entry)
+        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            body = json.dumps({"error": str(exc)}).encode("utf-8")
+            self.send_bytes(body, "application/json; charset=utf-8", HTTPStatus.BAD_REQUEST)
+            return
+        body = json.dumps(saved, ensure_ascii=False).encode("utf-8")
+        self.send_bytes(body, "application/json; charset=utf-8")
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        prefix = "/api/entries/"
+        if not path.startswith(prefix):
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        try:
+            self.app.delete_entry(path[len(prefix):])
+        except (ValueError, OSError) as exc:
+            body = json.dumps({"error": str(exc)}).encode("utf-8")
+            self.send_bytes(body, "application/json; charset=utf-8", HTTPStatus.NOT_FOUND)
+            return
+        self.send_bytes(b"", "application/json; charset=utf-8", HTTPStatus.NO_CONTENT)
 
     def log_message(self, format: str, *args: object) -> None:
         print(format % args, file=sys.stderr)

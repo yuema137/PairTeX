@@ -53,6 +53,9 @@ button { cursor: pointer; }
 .entry__quote { margin: 9px 0 5px; font-size: 13px; font-style: italic; }
 .entry__body { margin: 0; font-size: 14px; }
 .entry__meta { margin-top: 9px; color: var(--muted); font: 10px var(--mono); }
+.entry__actions { display: flex; gap: 10px; margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--border); }
+.entry__actions button { padding: 0; border: 0; color: var(--muted); background: transparent; font: 11px var(--mono); }
+.entry__actions button:hover { color: var(--fg); }
 .selection-tools { position: fixed; z-index: 10; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border-hi); border-radius: 8px; background: var(--card); box-shadow: 0 8px 24px rgba(16,31,46,.15); }
 .selection-tools button { border: 0; border-radius: 5px; padding: 6px 9px; color: var(--fg); background: transparent; font-size: 12px; }
 .selection-tools button:hover { background: var(--blue-soft); }

@@ -3,6 +3,7 @@ const state = {
   kind: null,
   selection: null,
   project: null,
+  editingEntry: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -54,11 +55,12 @@ function renderEntries(entries) {
     const payload = entry.payload || {};
     const body = payload.comment || payload.proposed_content || "Change intent";
     const kind = entry.kind === "change" ? `change · ${entry.status}` : "comment";
-    return `<article class="entry">
+    return `<article class="entry" data-entry-id="${escapeHtml(entry.id)}">
       <div class="entry__top"><span>${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
       <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml(entry.head_commit || "no commit")}${entry.worktree_dirty ? " · dirty" : ""}</div>
+      <div class="entry__actions"><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
     </article>`;
   }).join("") : `<p class="help">No feedback entries yet.</p>`;
 }
@@ -80,6 +82,32 @@ function openEntryDialog(kind) {
   $("#entry-dialog").showModal();
 }
 
+function openExistingEntry(entry) {
+  state.editingEntry = entry;
+  state.kind = entry.kind;
+  $("#dialog-kind").textContent = entry.kind === "change" ? "Change proposal" : "Comment";
+  $("#dialog-title").textContent = entry.kind === "change" ? "Edit change proposal" : "Edit comment";
+  $("#dialog-quote").textContent = `“${entry.anchor?.selected_rendered_text || "Document location"}”`;
+  $("#change-label").hidden = entry.kind !== "change";
+  $("#message-label").textContent = entry.kind === "change" ? "Additional instructions (optional)" : "Comment";
+  $("#message").required = entry.kind !== "change";
+  $("#message").value = entry.kind === "change" ? entry.payload?.instruction || "" : entry.payload?.comment || "";
+  $("#proposed-text").required = entry.kind === "change";
+  $("#proposed-text").value = entry.kind === "change" ? entry.payload?.proposed_content || "" : "";
+  $("#entry-dialog").showModal();
+}
+
+async function deleteEntry(entry) {
+  if (!confirm("Delete this feedback entry?")) return;
+  const response = await fetch(`/api/entries/${encodeURIComponent(entry.id)}`, { method: "DELETE" });
+  if (!response.ok) {
+    alert("Could not delete the entry.");
+    return;
+  }
+  state.project.entries = state.project.entries.filter((item) => item.id !== entry.id);
+  renderEntries(state.project.entries);
+}
+
 async function saveEntry(event) {
   event.preventDefault();
   if (event.submitter?.value !== "save") {
@@ -87,7 +115,7 @@ async function saveEntry(event) {
     return;
   }
   const kind = state.kind;
-  const entry = {
+  const entry = state.editingEntry || {
     id: crypto.randomUUID(),
     kind,
     status: kind === "change" && state.mode === "edit" ? "accepted" : kind === "change" ? "pending" : "open",
@@ -95,22 +123,34 @@ async function saveEntry(event) {
     worktree_dirty: state.project.worktree_dirty,
     author: state.project.author || undefined,
     anchor: state.selection,
-    payload: kind === "change" ? {
+    payload: {},
+    created_at: new Date().toISOString(),
+  };
+  entry.payload = kind === "change" ? {
       operation: "replace",
       instruction: $("#message").value.trim() || undefined,
       proposed_content: $("#proposed-text").value.trim(),
-    } : { comment: $("#message").value.trim() },
-    created_at: new Date().toISOString(),
-  };
-  const response = await fetch("/api/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry) });
+    } : { comment: $("#message").value.trim() };
+  const editing = Boolean(state.editingEntry);
+  const response = await fetch(editing ? `/api/entries/${encodeURIComponent(entry.id)}` : "/api/entries", {
+    method: editing ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  });
   if (!response.ok) {
     alert("Could not save the entry.");
     return;
   }
-  state.project.entries.push(await response.json());
+  const saved = await response.json();
+  if (editing) {
+    state.project.entries = state.project.entries.map((item) => item.id === saved.id ? saved : item);
+  } else {
+    state.project.entries.push(saved);
+  }
   renderEntries(state.project.entries);
   $("#entry-dialog").close();
   $("#selection-tools").hidden = true;
+  state.editingEntry = null;
   window.getSelection()?.removeAllRanges();
 }
 
@@ -125,7 +165,19 @@ async function init() {
     if (action) openEntryDialog(action === "change" ? "change" : "comment");
   });
   $("#entry-form").addEventListener("submit", saveEntry);
-  $("#cancel-entry").addEventListener("click", () => $("#entry-dialog").close());
+  $("#cancel-entry").addEventListener("click", () => {
+    state.editingEntry = null;
+    $("#entry-dialog").close();
+  });
+  $("#entries").addEventListener("click", (event) => {
+    const action = event.target.closest("button")?.dataset.entryAction;
+    if (!action) return;
+    const entryId = event.target.closest("[data-entry-id]")?.dataset.entryId;
+    const entry = state.project.entries.find((item) => item.id === entryId);
+    if (!entry) return;
+    if (action === "edit") openExistingEntry(entry);
+    if (action === "delete") deleteEntry(entry);
+  });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     state.mode = button.dataset.mode;
     document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item === button));
