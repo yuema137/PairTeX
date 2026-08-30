@@ -51,18 +51,49 @@ function showTools() {
 
 function renderEntries(entries) {
   $("#entry-count").textContent = entries.length;
-  $("#entries").innerHTML = entries.length ? entries.map((entry) => {
+  $("#entries").innerHTML = entries.length ? entries.map((entry, index) => {
     const payload = entry.payload || {};
     const body = payload.comment || payload.proposed_content || "Change intent";
     const kind = entry.kind === "change" ? `change · ${entry.status}` : "comment";
     return `<article class="entry" data-entry-id="${escapeHtml(entry.id)}">
-      <div class="entry__top"><span>${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
+      <div class="entry__top"><span><b class="entry__number">${index + 1}</b>${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
-      <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml(entry.head_commit || "no commit")}${entry.worktree_dirty ? " · dirty" : ""}</div>
-      <div class="entry__actions"><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
+      <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml((entry.anchor?.section || []).join(" / ") || "document")}${entry.worktree_dirty ? " · local changes" : ""}</div>
+      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
     </article>`;
   }).join("") : `<p class="help">No feedback entries yet.</p>`;
+}
+
+function decoratePaper(entries) {
+  document.querySelectorAll("[data-source-file]").forEach((node) => {
+    node.classList.remove("has-feedback", "is-focused");
+    node.removeAttribute("data-feedback-id");
+    node.removeAttribute("data-feedback-number");
+  });
+  entries.forEach((entry, index) => {
+    const target = [...document.querySelectorAll("[data-source-file]")].find((node) => {
+      const section = (node.dataset.section || "").split("/").filter(Boolean);
+      return node.dataset.sourceFile === entry.anchor?.file_hint
+        && section.join("/") === (entry.anchor?.section || []).join("/");
+    });
+    if (target) {
+      target.classList.add("has-feedback");
+      target.dataset.feedbackId = entry.id;
+      target.dataset.feedbackNumber = String(index + 1);
+    }
+  });
+}
+
+function locateEntry(entry) {
+  const target = document.querySelector(`[data-feedback-id="${CSS.escape(entry.id)}"]`);
+  const card = document.querySelector(`[data-entry-id="${CSS.escape(entry.id)}"]`);
+  if (!target || !card) return;
+  document.querySelectorAll(".has-feedback").forEach((node) => node.classList.remove("is-focused"));
+  document.querySelectorAll(".entry").forEach((node) => node.classList.remove("is-focused"));
+  target.classList.add("is-focused");
+  card.classList.add("is-focused");
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function openEntryDialog(kind) {
@@ -106,6 +137,7 @@ async function deleteEntry(entry) {
   }
   state.project.entries = state.project.entries.filter((item) => item.id !== entry.id);
   renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
 }
 
 async function saveEntry(event) {
@@ -148,6 +180,7 @@ async function saveEntry(event) {
     state.project.entries.push(saved);
   }
   renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
   $("#entry-dialog").close();
   $("#selection-tools").hidden = true;
   state.editingEntry = null;
@@ -157,8 +190,9 @@ async function saveEntry(event) {
 async function init() {
   state.project = await (await fetch("/api/state")).json();
   $("#paper").innerHTML = state.project.manuscript_html;
-  $("#version-status").textContent = `${state.project.head_commit.slice(0, 12)}${state.project.worktree_dirty ? " · dirty" : ""}`;
+  $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
   document.addEventListener("selectionchange", showTools);
   $("#selection-tools").addEventListener("click", (event) => {
     const action = event.target.closest("button")?.dataset.action;
@@ -177,6 +211,7 @@ async function init() {
     if (!entry) return;
     if (action === "edit") openExistingEntry(entry);
     if (action === "delete") deleteEntry(entry);
+    if (action === "locate") locateEntry(entry);
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     state.mode = button.dataset.mode;
