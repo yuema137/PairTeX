@@ -54,3 +54,6 @@ removes the entry artifact entirely. An optional generic coding-agent workflow
 is provided in [`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md).
 The active web interface shows open entries by default; resolved entries remain
 in the repository but do not accumulate in the active review view.
+The HTML interface cannot resolve or reopen entries. Resolution belongs to the
+source-side user or coding agent after the canonical source has been changed,
+built, committed, and the HTML projection refreshed.

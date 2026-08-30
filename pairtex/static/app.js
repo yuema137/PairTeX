@@ -109,7 +109,7 @@ function renderEntries(entries) {
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
       <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml((entry.anchor?.section || []).join(" / ") || "document")}${entry.worktree_dirty ? " · local changes" : ""}</div>
-      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="resolve">${lifecycle === "resolved" ? "Reopen" : "Resolve"}</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
+      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
     </article>`;
   }).join("") : `<p class="help">No feedback entries yet.</p>`;
 }
@@ -388,33 +388,6 @@ async function deleteEntry(entry) {
   decoratePaper(state.project.entries);
 }
 
-async function toggleResolved(entry) {
-  const resolved = entry.status === "resolved";
-  const updated = { ...entry, status: resolved ? "open" : "resolved" };
-  if (resolved) {
-    delete updated.resolution;
-  } else {
-    updated.resolution = {
-      resolved_at: new Date().toISOString(),
-      resolution_commit: state.project.head_commit,
-      note: "Marked resolved from the PairTeX interface.",
-    };
-  }
-  const response = await fetch(`/api/entries/${encodeURIComponent(entry.id)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updated),
-  });
-  if (!response.ok) {
-    alert("Could not update the entry lifecycle.");
-    return;
-  }
-  const saved = await response.json();
-  state.project.entries = state.project.entries.map((item) => item.id === saved.id ? saved : item);
-  renderEntries(state.project.entries);
-  decoratePaper(state.project.entries);
-}
-
 async function saveEntry(event) {
   event.preventDefault();
   if (event.submitter?.value !== "save") {
@@ -505,7 +478,6 @@ async function init() {
     if (action === "edit") openExistingEntry(entry);
     if (action === "delete") deleteEntry(entry);
     if (action === "locate") locateEntry(entry);
-    if (action === "resolve") toggleResolved(entry);
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     if (button.dataset.mode === "review" && (state.editDirty.size || state.mathDirty.size)) {

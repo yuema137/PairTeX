@@ -155,6 +155,11 @@ class Handler(BaseHTTPRequestHandler):
             entry = json.loads(self.rfile.read(length))
             if not isinstance(entry, dict):
                 raise ValueError("entry must be an object")
+            existing_path = self.app.project / ".pairtex" / "feedback" / f"{entry_id}.json"
+            if existing_path.exists():
+                existing = json.loads(existing_path.read_text(encoding="utf-8"))
+                if existing.get("status", "open") != entry.get("status", "open"):
+                    raise ValueError("feedback lifecycle is managed by the source-side workflow")
             entry["id"] = entry_id
             saved = self.app.save_entry(entry)
         except (ValueError, json.JSONDecodeError, OSError) as exc:

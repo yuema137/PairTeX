@@ -251,6 +251,12 @@ The default work interface shows only open entries; resolved entries remain in
 the repository for history but are omitted from the active cards, ordering, and
 manuscript markers.
 
+The HTML interface cannot resolve or reopen entries. Only the source-side user
+or coding agent may update lifecycle after addressing the canonical source and
+recording the source commit that contains the change. The HTML interface may
+edit feedback content or delete a feedback artifact, but neither operation
+claims that the source has been addressed.
+
 For change entries, `decision` records the interaction semantics separately
 from lifecycle: it may be `accepted` for Edit mode or `pending` for Review
 mode. A change can therefore be accepted as an intent while remaining open
