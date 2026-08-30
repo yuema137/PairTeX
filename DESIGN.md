@@ -247,6 +247,9 @@ potentially stale, but does not decide how a user or agent should reconcile it.
 `status` is the feedback lifecycle and is either `open` or `resolved`.
 Resolving keeps the JSON file and may record resolution metadata. Deleting an
 entry removes the JSON file entirely. These are different operations.
+The default work interface shows only open entries; resolved entries remain in
+the repository for history but are omitted from the active cards, ordering, and
+manuscript markers.
 
 For change entries, `decision` records the interaction semantics separately
 from lifecycle: it may be `accepted` for Edit mode or `pending` for Review

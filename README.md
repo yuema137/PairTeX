@@ -52,3 +52,5 @@ Feedback entries use an `open` / `resolved` lifecycle. Resolving keeps the
 entry for history and records the source commit that addressed it; deleting
 removes the entry artifact entirely. An optional generic coding-agent workflow
 is provided in [`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md).
+The active web interface shows open entries by default; resolved entries remain
+in the repository but do not accumulate in the active review view.

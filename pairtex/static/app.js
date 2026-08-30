@@ -94,7 +94,7 @@ function showTools() {
 }
 
 function renderEntries(entries) {
-  const orderedEntries = sortEntries(entries);
+  const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
   let changeNumber = 0;
   $("#entry-count").textContent = orderedEntries.length;
   $("#entries").innerHTML = orderedEntries.length ? orderedEntries.map((entry) => {
@@ -115,7 +115,7 @@ function renderEntries(entries) {
 }
 
 function decoratePaper(entries) {
-  const orderedEntries = sortEntries(entries);
+  const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
   document.querySelectorAll("[data-source-file]").forEach((node) => {
     node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
