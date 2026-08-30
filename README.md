@@ -8,6 +8,6 @@ This project is currently in the design and MVP exploration phase, with the Side
 
 ## Version boundary
 
-PairTeX uses Git commits as the formal version boundary for human-agent collaboration. Feedback entries must identify the commit of the manuscript version they refer to.
+PairTeX uses Git commits as the strongest version identity for human-agent collaboration. Feedback entries record the current `HEAD` commit and whether the working tree was dirty when the entry was created.
 
-Uncommitted working-tree changes are outside the MVP scope. Users should commit the manuscript before relying on PairTeX feedback as a shared, reproducible reference. PairTeX does not snapshot dirty worktrees, replay uncommitted patches, or merge source changes automatically.
+Clean commits are required for formal pilot evidence, but normal PairTeX use may start from a dirty working tree. Dirty feedback is marked as originating from an uncommitted state and relies more heavily on source and context anchors. PairTeX does not snapshot dirty worktrees, replay uncommitted patches, or merge source changes automatically.

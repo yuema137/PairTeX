@@ -29,11 +29,15 @@ feedback entries, with normal Git operations.
 
 ## Version boundary
 
-Git commits define the formal manuscript versions used by PairTeX. Every
-feedback entry must identify the commit it refers to.
+Git commits define the strongest formal manuscript version identity used by
+PairTeX. Every feedback entry records the current `HEAD` commit and whether
+the working tree was dirty when the entry was created.
 
-Uncommitted working-tree changes are outside the MVP scope. PairTeX does not
-snapshot dirty worktrees, replay uncommitted patches, or merge source changes.
+Clean commits are required for formal Siderius pilot evidence, but normal
+PairTeX use may start from a dirty working tree. Dirty feedback is explicitly
+marked as originating from an uncommitted state and relies more heavily on
+source text and surrounding context. PairTeX does not snapshot dirty
+worktrees, replay uncommitted patches, or merge source changes.
 
 ## Core responsibilities
 
@@ -162,10 +166,11 @@ renderer-specific logic to PairTeX.
 
 ## Minimal feedback model
 
-The on-disk representation should favor Git-friendly independent entries. One
-file per entry is the current leading option because parallel contributors can
-add feedback without appending to the same file. The exact filename and
-extension remain open.
+The on-disk representation should favor Git-friendly independent entries. Each
+feedback entry is one JSON file under `.pairtex/feedback/`, for example
+`.pairtex/feedback/01K....json`. Parallel contributors can add feedback
+without appending to the same file, and lifecycle changes remain isolated to
+one artifact.
 
 The minimum conceptual record is:
 
@@ -174,10 +179,9 @@ The minimum conceptual record is:
   "id": "entry-id",
   "kind": "comment",
   "status": "open",
-  "base_commit": "abc123",
-  "author": {
-    "github_username": "example"
-  },
+  "head_commit": "abc123",
+  "worktree_dirty": false,
+  "author": "Yue",
   "anchor": {
     "file_hint": "main.tex",
     "line_start_hint": 12,
@@ -195,10 +199,15 @@ The minimum conceptual record is:
 }
 ```
 
-`base_commit` identifies the formal manuscript version. File, section, quoted
-text, surrounding context, and line hints identify the target within that
-version. Line numbers are hints, not identity. PairTeX may report an entry as
+`head_commit` identifies the current Git revision, while `worktree_dirty`
+states whether uncommitted changes were present. File, section, quoted text,
+surrounding context, and line hints identify the target within the observed
+content. Line numbers are hints, not identity. PairTeX may report an entry as
 potentially stale, but does not decide how a user or agent should reconcile it.
+
+`author` is optional display metadata. It may come from a configured display
+name or `git config user.name`; PairTeX does not require GitHub identity,
+authentication, or an account system.
 
 For a change proposal, `payload` contains an operation such as `insert`,
 `delete`, or `replace`, plus proposed content. PairTeX records the intent; it
@@ -206,16 +215,20 @@ does not apply the change to `.tex` or `.bib` files.
 
 ## Edit and Review semantics
 
-In Edit mode, the UI presents a human change as an authoritative edit. The
-MVP may still persist it as a structured change intent. A coding agent or human
-developer applies that intent to the canonical LaTeX source.
+In Edit mode, the UI presents a human change as authoritative. The change is
+accepted immediately and a source modification is requested immediately. The
+MVP may persist the accepted change as a structured change entry, while a
+coding agent or human developer performs the actual modification to the
+canonical LaTeX source.
 
 In Review mode, the UI presents the same kinds of operations as pending
 proposals that can be accepted, rejected, or left open. Comments can exist in
 either mode and can target selected text or a document location/block.
 
-This distinction is a presentation and lifecycle distinction. It is not a
-reason to implement two source-editing engines.
+Edit and Review share the same underlying change representation. Their
+difference is lifecycle: Edit is immediately accepted and requested against
+canonical source, while Review requires a later accept or reject decision.
+PairTeX still does not implement a source-editing engine.
 
 ## Runtime ownership
 
@@ -224,7 +237,6 @@ PairTeX should own only:
 - project and configuration discovery;
 - a renderer adapter;
 - a localhost reading and review UI;
-- human identity metadata collection;
 - feedback persistence and lifecycle display;
 - rebuild and refresh hooks.
 
@@ -251,13 +263,13 @@ deterministic HTML-to-TeX rewriting.
 ## Explicit non-goals
 
 The MVP will not include an editor plugin, central service, account database,
-OAuth authentication, real-time collaboration, CRDTs, automatic source
-patching, a custom TeX parser, a general merge engine, or an agent execution
-framework.
+OAuth authentication, GitHub identity integration, real-time collaboration,
+CRDTs, automatic source patching, a custom TeX parser, a general merge engine,
+or an agent execution framework.
 
 ## Design status
 
-**DESIGN READY FOR REVIEW — DO NOT IMPLEMENT**
+**DESIGN READY FOR FREEZE — DO NOT IMPLEMENT**
 
-Implementation approval requires review of this document, the renderer
-comparison, and the Demo 1 / Demo 2 acceptance criteria.
+Implementation approval requires freezing this document after review of the
+renderer comparison and the Demo 1 / Demo 2 acceptance criteria.
