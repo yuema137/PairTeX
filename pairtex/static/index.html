@@ -14,6 +14,7 @@
           <button class="mode is-active" data-mode="edit">Edit</button>
           <button class="mode" data-mode="review">Review</button>
         </div>
+        <div class="mode-hint" id="mode-hint">Direct edits are recorded as accepted intents.</div>
         <div class="status" id="version-status">Loading version…</div>
       </div>
     </header>
@@ -35,7 +36,7 @@
 
     <div class="selection-tools" id="selection-tools" hidden>
       <button data-action="comment">Comment</button>
-      <button data-action="change">Edit</button>
+      <button data-action="change" id="change-action">Edit text</button>
     </div>
 
     <dialog id="entry-dialog">
@@ -53,7 +54,7 @@
         </label>
         <div class="dialog-actions">
           <button type="button" id="cancel-entry" class="button secondary">Cancel</button>
-          <button value="save" class="button primary" id="save-entry">Save entry</button>
+          <button value="save" class="button primary" id="save-entry">Save edit</button>
         </div>
       </form>
     </dialog>

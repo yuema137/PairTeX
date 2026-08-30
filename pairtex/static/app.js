@@ -145,6 +145,9 @@ function openEntryDialog(kind) {
   $("#dialog-title").textContent = kind === "change"
     ? (state.mode === "edit" ? "Edit manuscript" : "Propose an edit")
     : "Add comment";
+  $("#save-entry").textContent = kind === "change"
+    ? (state.mode === "edit" ? "Save edit" : "Save proposal")
+    : "Save comment";
   $("#message-label").textContent = kind === "change" ? "Additional instructions (optional)" : "Comment";
   $("#dialog-quote").textContent = `“${state.selection.selected_rendered_text}”`;
   $("#change-label").hidden = kind !== "change";
@@ -160,6 +163,7 @@ function openExistingEntry(entry) {
   state.kind = entry.kind;
   $("#dialog-kind").textContent = entry.kind === "change" ? "Change proposal" : "Comment";
   $("#dialog-title").textContent = entry.kind === "change" ? "Edit change proposal" : "Edit comment";
+  $("#save-entry").textContent = entry.kind === "change" ? "Save proposal" : "Save comment";
   $("#dialog-quote").textContent = `“${entry.anchor?.selected_rendered_text || "Document location"}”`;
   $("#change-label").hidden = entry.kind !== "change";
   $("#message-label").textContent = entry.kind === "change" ? "Additional instructions (optional)" : "Comment";
@@ -257,6 +261,10 @@ async function init() {
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     state.mode = button.dataset.mode;
+    $("#change-action").textContent = state.mode === "edit" ? "Edit text" : "Suggest edit";
+    $("#mode-hint").textContent = state.mode === "edit"
+      ? "Direct edits are recorded as accepted intents."
+      : "Edits are recorded as pending proposals for review.";
     document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item === button));
   }));
 }
