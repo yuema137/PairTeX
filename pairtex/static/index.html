@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PairTeX</title>
     <link rel="stylesheet" href="/style.css">
+    <script>
+      window.MathJax = { tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] }, startup: { typeset: false } };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
     <header class="topbar">
@@ -55,6 +59,23 @@
         <div class="dialog-actions">
           <button type="button" id="cancel-entry" class="button secondary">Cancel</button>
           <button value="save" class="button primary" id="save-entry">Save edit</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="math-dialog">
+      <form method="dialog" id="math-form">
+        <p class="eyebrow">Math editor</p>
+        <h2>Edit formula</h2>
+        <label>
+          LaTeX source
+          <textarea id="math-source" rows="4" spellcheck="false"></textarea>
+        </label>
+        <div class="math-preview-label">Live preview</div>
+        <div id="math-preview" class="math-preview"></div>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-math" class="button secondary">Cancel</button>
+          <button value="save" class="button primary">Save formula</button>
         </div>
       </form>
     </dialog>

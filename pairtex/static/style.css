@@ -45,6 +45,8 @@ button { cursor: pointer; }
 .paper figcaption { color: var(--muted); font-size: 13px; }
 .paper [data-source-file] { position: relative; border-radius: 3px; }
 .paper [data-source-file]:hover { background: var(--blue-soft); }
+.paper [data-editable="text"] { cursor: text; }
+.paper [data-editable="math"] { cursor: pointer; }
 .paper [data-source-file].has-feedback { outline: 1px dashed var(--border-hi); outline-offset: 7px; }
 .paper [data-source-file].has-feedback.has-number::before { content: attr(data-feedback-number); position: absolute; top: -15px; left: -15px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px dashed var(--blue); border-radius: 50%; color: var(--blue); background: var(--bg); font: 10px var(--mono); }
 .paper [data-source-file].has-feedback.is-focused { outline: 2px dashed var(--blue); outline-offset: 8px; background: var(--blue-soft); }
@@ -74,6 +76,8 @@ dialog::backdrop { background: rgba(8,19,29,.35); backdrop-filter: blur(3px); }
 dialog h2 { margin: 0 0 14px; }
 label { display: grid; gap: 6px; margin-top: 14px; color: var(--muted); font-size: 13px; }
 textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 6px; padding: 9px; color: var(--fg); background: var(--card); }
+.math-preview-label { margin-top: 16px; color: var(--muted); font-size: 13px; }
+.math-preview { min-height: 52px; margin-top: 6px; padding: 14px; overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--card); text-align: center; }
 .quoted { margin: 0; padding: 10px 12px; border-left: 2px solid var(--blue); background: var(--blue-soft); font-size: 13px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .button { border: 1px solid var(--border); border-radius: 999px; padding: 8px 15px; }

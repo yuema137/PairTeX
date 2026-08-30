@@ -6,6 +6,8 @@ const state = {
   editingEntry: null,
   editBaselines: new Map(),
   editTimers: new Map(),
+  mathBlock: null,
+  mathBaseline: "",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -135,7 +137,7 @@ function decoratePaper(entries) {
 
 function captureEditBaselines() {
   state.editBaselines = new Map(
-    [...document.querySelectorAll("[data-source-file]")].map((node) => [node, node.innerText.trim()]),
+    [...document.querySelectorAll('[data-editable="text"]')].map((node) => [node, node.innerText.trim()]),
   );
 }
 
@@ -195,15 +197,93 @@ async function persistDirectEdit(block) {
 
 function scheduleDirectEdit(event) {
   if (state.mode !== "edit") return;
-  const block = event.target.closest("[data-source-file]");
+  const block = event.target.closest('[data-editable="text"]');
   if (!block) return;
   clearTimeout(state.editTimers.get(block));
   state.editTimers.set(block, setTimeout(() => persistDirectEdit(block), 700));
 }
 
+async function typesetMath(element) {
+  if (window.MathJax?.typesetPromise) {
+    await window.MathJax.typesetPromise([element]);
+  }
+}
+
+function renderMathPreview(source) {
+  const preview = $("#math-preview");
+  preview.textContent = `\\[${source}\\]`;
+  typesetMath(preview).catch(() => {});
+}
+
+function openMathEditor(block) {
+  if (state.mode !== "edit") return;
+  state.mathBlock = block;
+  state.mathBaseline = block.dataset.mathSource || "";
+  $("#math-source").value = state.mathBaseline;
+  renderMathPreview(state.mathBaseline);
+  $("#math-dialog").showModal();
+}
+
+async function saveMathEdit(event) {
+  event.preventDefault();
+  if (event.submitter?.value !== "save" || !state.mathBlock) {
+    $("#math-dialog").close();
+    return;
+  }
+  const block = state.mathBlock;
+  const source = $("#math-source").value.trim();
+  if (!source) return;
+  block.dataset.mathSource = source;
+  block.querySelector(".math-render").textContent = `\\[${source}\\]`;
+  await typesetMath(block.querySelector(".math-render"));
+  const existing = state.project.entries.find((entry) => entry.id === block.dataset.mathEditId);
+  const entry = existing || {
+    id: crypto.randomUUID(),
+    kind: "change",
+    status: "accepted",
+    head_commit: state.project.head_commit,
+    worktree_dirty: state.project.worktree_dirty,
+    author: state.project.author || undefined,
+    anchor: {
+      file_hint: block.dataset.sourceFile,
+      line_start_hint: Number(block.dataset.sourceLine || 0) || null,
+      line_end_hint: Number(block.dataset.sourceLineEnd || block.dataset.sourceLine || 0) || null,
+      section: (block.dataset.section || "").split("/").filter(Boolean),
+      selected_rendered_text: state.mathBaseline,
+      selected_source_text: state.mathBaseline,
+      rendered_offset: 0,
+      prefix_context: "",
+      suffix_context: "",
+    },
+    payload: {},
+    created_at: new Date().toISOString(),
+  };
+  entry.payload = { operation: "replace", proposed_content: source };
+  const editing = Boolean(existing);
+  const response = await fetch(editing ? `/api/entries/${encodeURIComponent(entry.id)}` : "/api/entries", {
+    method: editing ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  });
+  if (response.ok) {
+    const saved = await response.json();
+    block.dataset.mathEditId = saved.id;
+    state.project.entries = editing
+      ? state.project.entries.map((item) => item.id === saved.id ? saved : item)
+      : [...state.project.entries, saved];
+    renderEntries(state.project.entries);
+    decoratePaper(state.project.entries);
+  }
+  $("#math-dialog").close();
+  state.mathBlock = null;
+}
+
 function setMode(mode) {
   state.mode = mode;
-  $("#paper").contentEditable = mode === "edit" ? "true" : "false";
+  $("#paper").contentEditable = "false";
+  document.querySelectorAll('[data-editable="text"]').forEach((block) => {
+    block.contentEditable = mode === "edit" ? "true" : "false";
+  });
   $("#paper").classList.toggle("is-editing", mode === "edit");
   $("#change-action").textContent = mode === "edit" ? "Edit text" : "Suggest edit";
   $("#mode-hint").textContent = mode === "edit"
@@ -327,6 +407,9 @@ async function init() {
   state.project = await (await fetch("/api/state")).json();
   $("#paper").innerHTML = state.project.manuscript_html;
   captureEditBaselines();
+  if (window.MathJax?.startup?.promise) {
+    window.MathJax.startup.promise.then(() => typesetMath($("#paper"))).catch(() => {});
+  }
   $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
   decoratePaper(state.project.entries);
@@ -338,6 +421,16 @@ async function init() {
   });
   $("#entry-form").addEventListener("submit", saveEntry);
   $("#paper").addEventListener("input", scheduleDirectEdit);
+  $("#paper").addEventListener("click", (event) => {
+    const math = event.target.closest('[data-editable="math"]');
+    if (math) openMathEditor(math);
+  });
+  $("#math-source").addEventListener("input", (event) => renderMathPreview(event.target.value));
+  $("#math-form").addEventListener("submit", saveMathEdit);
+  $("#cancel-math").addEventListener("click", () => {
+    state.mathBlock = null;
+    $("#math-dialog").close();
+  });
   $("#cancel-entry").addEventListener("click", () => {
     state.editingEntry = null;
     $("#entry-dialog").close();

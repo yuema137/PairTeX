@@ -230,6 +230,31 @@ difference is lifecycle: Edit is immediately accepted and requested against
 canonical source, while Review requires a later accept or reject decision.
 PairTeX still does not implement a source-editing engine.
 
+## Editable content boundary
+
+Edit mode must not make the entire rendered DOM editable. The renderer marks
+which semantic units have a safe source correspondence, and PairTeX only
+enables editing for those units.
+
+- Prose text can be edited directly inside an editable text block.
+- Mathematics can be edited through a source-aware LaTeX math input with a
+  live rendered preview when the renderer exposes the math source.
+- Figures, tables, citations, cross-references, footnotes, section structure,
+  metadata, environment boundaries, custom macros, and layout wrappers remain
+  read-only. They can still receive comments or Review proposals.
+
+The HTML contract is intentionally small:
+
+```html
+<p data-editable="text" data-source-file="sections/intro.tex">...</p>
+<div data-editable="math" data-math-source="...">...</div>
+<table data-editable="false">...</table>
+```
+
+This boundary prevents a browser edit from silently changing renderer markup
+or document structure that the consuming agent cannot map back to canonical
+LaTeX.
+
 ## Runtime ownership
 
 PairTeX should own only:
