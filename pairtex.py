@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from pairtex_validation import validate_rendered_html
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "pairtex" / "static"
@@ -66,6 +67,7 @@ class App:
     def __init__(self, project: Path, html_path: Path):
         self.project = project.resolve()
         self.html_path = html_path.resolve()
+        validate_rendered_html(self.html_path.read_text(encoding="utf-8"))
 
     def state(self) -> dict[str, object]:
         html = self.html_path.read_text(encoding="utf-8")

@@ -59,6 +59,13 @@ PairTeX is not responsible for:
 - providing accounts, authentication, or real-time collaboration;
 - implementing a new TeX compiler or a general-purpose merge engine.
 
+PairTeX must never write to canonical manuscript source. HTML edits, comments,
+review decisions, renderer metadata, and rebuild requests may only produce or
+update PairTeX output artifacts, such as files under `.pairtex/feedback/` and
+disposable render/build directories. Whether a user or coding agent later
+uses those outputs to modify `.tex` or `.bib` files is outside PairTeX's
+responsibility.
+
 ## Proposed boundaries
 
 The implementation should keep replaceable concerns behind small boundaries:
@@ -116,6 +123,35 @@ The default renderer should optimize for:
 It does not need to reproduce PDF layout. The default visual language should
 be restrained, readable, responsive, and easy to theme through a small set of
 design tokens.
+
+### Renderer output contract
+
+An adapter may use any suitable LaTeX-to-HTML tool, but PairTeX only opens the
+interactive manuscript view after the adapter output passes validation. The
+output must:
+
+- visibly pre-render mathematics as MathML, SVG, or another rendered form;
+- keep raw TeX source in metadata, not as visible manuscript content;
+- preserve section, paragraph, citation, reference, figure, and table meaning;
+- attach source file and context hints to interactive semantic units;
+- mark editable units explicitly as prose text or source-aware mathematics;
+- mark unsupported or protected structures as read-only while leaving them
+  commentable where possible.
+
+The validator should fail clearly when the output contains unrendered math,
+missing source hints, or a renderer failure. PairTeX must not silently fall
+back to displaying raw LaTeX as the manuscript view.
+
+### User and agent integration contract
+
+The user or the user's coding agent is responsible for providing a project
+configuration, ensuring the selected renderer and existing build workflow are
+available, and deciding how to consume feedback entries. They may inspect,
+apply, reject, transform, or archive entries using their own workflow.
+
+PairTeX does not prescribe an agent framework, an entry-consumption protocol,
+source patching strategy, or an automatic path from HTML interaction to
+canonical source modification.
 
 ## Demo acceptance criteria
 
