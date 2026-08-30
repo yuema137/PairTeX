@@ -60,6 +60,7 @@ button { cursor: pointer; }
 .entry { position: relative; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
 .entry::before { content: ""; position: absolute; top: 22px; left: -44px; width: 32px; border-top: 1px dashed var(--border-hi); }
 .entry.is-focused { border: 1px dashed var(--blue); background: var(--blue-soft); }
+.entry.is-resolved { opacity: .62; }
 .entry__top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font: 11px var(--mono); }
 .entry__number { display: inline-grid; width: 18px; height: 18px; margin-right: 6px; place-items: center; border: 1px dashed var(--blue); border-radius: 50%; color: var(--blue); font-weight: 400; }
 .entry__quote { margin: 9px 0 5px; font-size: 13px; font-style: italic; }

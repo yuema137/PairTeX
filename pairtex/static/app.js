@@ -98,14 +98,16 @@ function renderEntries(entries) {
   $("#entries").innerHTML = orderedEntries.length ? orderedEntries.map((entry) => {
     const payload = entry.payload || {};
     const body = payload.comment || payload.proposed_content || "Change intent";
-    const kind = entry.kind === "change" ? `change · ${entry.status}` : "comment";
+    const lifecycle = entry.status === "resolved" ? "resolved" : "open";
+    const decision = entry.kind === "change" ? ` · ${entry.decision || (entry.status === "pending" ? "pending" : "accepted")}` : "";
+    const kind = `${entry.kind === "change" ? "change" : "comment"}${decision} · ${lifecycle}`;
     const number = entry.kind === "change" ? ++changeNumber : null;
-    return `<article class="entry" data-entry-id="${escapeHtml(entry.id)}">
+    return `<article class="entry${lifecycle === "resolved" ? " is-resolved" : ""}" data-entry-id="${escapeHtml(entry.id)}">
       <div class="entry__top"><span>${number ? `<b class="entry__number">${number}</b>` : ""}${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
       <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml((entry.anchor?.section || []).join(" / ") || "document")}${entry.worktree_dirty ? " · local changes" : ""}</div>
-      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
+      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="resolve">${lifecycle === "resolved" ? "Reopen" : "Resolve"}</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
     </article>`;
   }).join("") : `<p class="help">No feedback entries yet.</p>`;
 }
@@ -158,7 +160,8 @@ async function persistDirectEdit(block) {
   const entry = existing || {
     id: crypto.randomUUID(),
     kind: "change",
-    status: "accepted",
+    status: "open",
+    decision: "accepted",
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
     author: state.project.author || undefined,
@@ -240,7 +243,8 @@ async function saveMathEdit(event) {
   const entry = existing || {
     id: crypto.randomUUID(),
     kind: "change",
-    status: "accepted",
+    status: "open",
+    decision: "accepted",
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
     author: state.project.author || undefined,
@@ -356,6 +360,33 @@ async function deleteEntry(entry) {
   decoratePaper(state.project.entries);
 }
 
+async function toggleResolved(entry) {
+  const resolved = entry.status === "resolved";
+  const updated = { ...entry, status: resolved ? "open" : "resolved" };
+  if (resolved) {
+    delete updated.resolution;
+  } else {
+    updated.resolution = {
+      resolved_at: new Date().toISOString(),
+      resolution_commit: state.project.head_commit,
+      note: "Marked resolved from the PairTeX interface.",
+    };
+  }
+  const response = await fetch(`/api/entries/${encodeURIComponent(entry.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updated),
+  });
+  if (!response.ok) {
+    alert("Could not update the entry lifecycle.");
+    return;
+  }
+  const saved = await response.json();
+  state.project.entries = state.project.entries.map((item) => item.id === saved.id ? saved : item);
+  renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
+}
+
 async function saveEntry(event) {
   event.preventDefault();
   if (event.submitter?.value !== "save") {
@@ -366,7 +397,8 @@ async function saveEntry(event) {
   const entry = state.editingEntry || {
     id: crypto.randomUUID(),
     kind,
-    status: kind === "change" && state.mode === "edit" ? "accepted" : kind === "change" ? "pending" : "open",
+    status: "open",
+    decision: kind === "change" ? (state.mode === "edit" ? "accepted" : "pending") : null,
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
     author: state.project.author || undefined,
@@ -444,6 +476,7 @@ async function init() {
     if (action === "edit") openExistingEntry(entry);
     if (action === "delete") deleteEntry(entry);
     if (action === "locate") locateEntry(entry);
+    if (action === "resolve") toggleResolved(entry);
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
     setMode(button.dataset.mode);

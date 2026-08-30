@@ -47,3 +47,8 @@ content should be reported or kept read-only, not silently degraded.
 PairTeX writes only feedback and disposable render/build output. It does not
 apply feedback entries, edit source files, choose a coding agent, or define how
 users and agents consume the entries.
+
+Feedback entries use an `open` / `resolved` lifecycle. Resolving keeps the
+entry for history and records the source commit that addressed it; deleting
+removes the entry artifact entirely. An optional generic coding-agent workflow
+is provided in [`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md).

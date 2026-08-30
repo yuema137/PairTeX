@@ -153,6 +153,8 @@ PairTeX does not prescribe an agent framework, an entry-consumption protocol,
 source patching strategy, or an automatic path from HTML interaction to
 canonical source modification.
 
+An optional generic agent workflow is documented in `skills/pairtex-agent/`.
+
 ## Demo acceptance criteria
 
 ### Demo 1: minimal interaction fixture
@@ -215,6 +217,7 @@ The minimum conceptual record is:
   "id": "entry-id",
   "kind": "comment",
   "status": "open",
+  "decision": null,
   "head_commit": "abc123",
   "worktree_dirty": false,
   "author": "Yue",
@@ -241,6 +244,15 @@ surrounding context, and line hints identify the target within the observed
 content. Line numbers are hints, not identity. PairTeX may report an entry as
 potentially stale, but does not decide how a user or agent should reconcile it.
 
+`status` is the feedback lifecycle and is either `open` or `resolved`.
+Resolving keeps the JSON file and may record resolution metadata. Deleting an
+entry removes the JSON file entirely. These are different operations.
+
+For change entries, `decision` records the interaction semantics separately
+from lifecycle: it may be `accepted` for Edit mode or `pending` for Review
+mode. A change can therefore be accepted as an intent while remaining open
+until a user or coding agent addresses it in canonical source.
+
 `author` is optional display metadata. It may come from a configured display
 name or `git config user.name`; PairTeX does not require GitHub identity,
 authentication, or an account system.
@@ -248,6 +260,11 @@ authentication, or an account system.
 For a change proposal, `payload` contains an operation such as `insert`,
 `delete`, or `replace`, plus proposed content. PairTeX records the intent; it
 does not apply the change to `.tex` or `.bib` files.
+
+When a coding agent addresses an entry, it should rebuild the manuscript and
+refresh the HTML from the resulting source revision before marking the entry
+resolved. Resolution metadata should identify the commit containing the source
+change. PairTeX does not require or implement this consumer workflow itself.
 
 ## Edit and Review semantics
 
