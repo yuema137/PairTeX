@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PairTeX</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="/">PairTeX</a>
+        <div class="modes" role="group" aria-label="Interaction mode">
+          <button class="mode is-active" data-mode="edit">Edit</button>
+          <button class="mode" data-mode="review">Review</button>
+        </div>
+        <div class="status" id="version-status">Loading version…</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <article class="paper" id="paper" aria-label="Rendered manuscript"></article>
+      <aside class="sidebar">
+        <div class="sidebar__head">
+          <div>
+            <p class="eyebrow">Feedback</p>
+            <h1>Entries</h1>
+          </div>
+          <span class="count" id="entry-count">0</span>
+        </div>
+        <p class="help">Select manuscript text to leave a comment or record a change intent.</p>
+        <div id="entries" class="entries"></div>
+      </aside>
+    </main>
+
+    <div class="selection-tools" id="selection-tools" hidden>
+      <button data-action="comment">Comment</button>
+      <button data-action="change">Suggest change</button>
+    </div>
+
+    <dialog id="entry-dialog">
+      <form method="dialog" id="entry-form">
+        <p class="eyebrow" id="dialog-kind">Comment</p>
+        <h2 id="dialog-title">Add feedback</h2>
+        <p class="quoted" id="dialog-quote"></p>
+        <label id="change-label" hidden>
+          Proposed text
+          <textarea id="proposed-text" rows="4"></textarea>
+        </label>
+        <label>
+          <span id="message-label">Comment</span>
+          <textarea id="message" rows="5" required></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button value="cancel" class="button secondary">Cancel</button>
+          <button value="save" class="button primary">Save entry</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

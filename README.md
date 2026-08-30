@@ -6,6 +6,22 @@ PairTeX is a human-facing review layer for existing LaTeX repositories. LaTeX re
 
 This project is currently in the design and MVP exploration phase, with the Siderius paper as the initial pilot project.
 
+## Demo 1
+
+The current interaction demo uses an isolated LaTeX fixture and does not
+depend on the Siderius paper repository:
+
+```sh
+python3 pairtex.py \\
+  --project demo/fixture \\
+  --html demo/fixture/rendered.html \\
+  --port 8765
+```
+
+Open `http://127.0.0.1:8765/` to read the rendered manuscript, select text,
+and create comments or change intents. Entries are written as independent
+JSON files under `demo/fixture/.pairtex/feedback/`.
+
 ## Version boundary
 
 PairTeX uses Git commits as the strongest version identity for human-agent collaboration. Feedback entries record the current `HEAD` commit and whether the working tree was dirty when the entry was created.
