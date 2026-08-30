@@ -14,6 +14,21 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function sortEntries(entries) {
+  return [...entries].sort((left, right) => {
+    const leftAnchor = left.anchor || {};
+    const rightAnchor = right.anchor || {};
+    const fileOrder = (leftAnchor.file_hint || "").localeCompare(rightAnchor.file_hint || "");
+    if (fileOrder) return fileOrder;
+    const sectionOrder = (leftAnchor.section || []).join("/").localeCompare((rightAnchor.section || []).join("/"));
+    if (sectionOrder) return sectionOrder;
+    const leftLine = Number.isFinite(leftAnchor.line_start_hint) && leftAnchor.line_start_hint > 0 ? leftAnchor.line_start_hint : Number.MAX_SAFE_INTEGER;
+    const rightLine = Number.isFinite(rightAnchor.line_start_hint) && rightAnchor.line_start_hint > 0 ? rightAnchor.line_start_hint : Number.MAX_SAFE_INTEGER;
+    if (leftLine !== rightLine) return leftLine - rightLine;
+    return (left.created_at || "").localeCompare(right.created_at || "");
+  });
+}
+
 function selectedAnchor() {
   const selection = window.getSelection();
   if (!selection || selection.isCollapsed || !selection.toString().trim()) return null;
@@ -50,13 +65,16 @@ function showTools() {
 }
 
 function renderEntries(entries) {
-  $("#entry-count").textContent = entries.length;
-  $("#entries").innerHTML = entries.length ? entries.map((entry, index) => {
+  const orderedEntries = sortEntries(entries);
+  let changeNumber = 0;
+  $("#entry-count").textContent = orderedEntries.length;
+  $("#entries").innerHTML = orderedEntries.length ? orderedEntries.map((entry) => {
     const payload = entry.payload || {};
     const body = payload.comment || payload.proposed_content || "Change intent";
     const kind = entry.kind === "change" ? `change · ${entry.status}` : "comment";
+    const number = entry.kind === "change" ? ++changeNumber : null;
     return `<article class="entry" data-entry-id="${escapeHtml(entry.id)}">
-      <div class="entry__top"><span><b class="entry__number">${index + 1}</b>${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
+      <div class="entry__top"><span>${number ? `<b class="entry__number">${number}</b>` : ""}${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
       <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml((entry.anchor?.section || []).join(" / ") || "document")}${entry.worktree_dirty ? " · local changes" : ""}</div>
@@ -66,12 +84,14 @@ function renderEntries(entries) {
 }
 
 function decoratePaper(entries) {
+  const orderedEntries = sortEntries(entries);
   document.querySelectorAll("[data-source-file]").forEach((node) => {
-    node.classList.remove("has-feedback", "is-focused");
+    node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
     node.removeAttribute("data-feedback-number");
   });
-  entries.forEach((entry, index) => {
+  let changeNumber = 0;
+  orderedEntries.forEach((entry) => {
     const target = [...document.querySelectorAll("[data-source-file]")].find((node) => {
       const section = (node.dataset.section || "").split("/").filter(Boolean);
       return node.dataset.sourceFile === entry.anchor?.file_hint
@@ -80,7 +100,10 @@ function decoratePaper(entries) {
     if (target) {
       target.classList.add("has-feedback");
       target.dataset.feedbackId = entry.id;
-      target.dataset.feedbackNumber = String(index + 1);
+      if (entry.kind === "change") {
+        target.classList.add("has-number");
+        target.dataset.feedbackNumber = String(++changeNumber);
+      }
     }
   });
 }

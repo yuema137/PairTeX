@@ -42,7 +42,7 @@ button { cursor: pointer; }
 .paper [data-source-file] { position: relative; border-radius: 3px; }
 .paper [data-source-file]:hover { background: var(--blue-soft); }
 .paper [data-source-file].has-feedback { outline: 1px dashed var(--border-hi); outline-offset: 7px; }
-.paper [data-source-file].has-feedback::before { content: attr(data-feedback-number); position: absolute; top: -15px; left: -15px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px dashed var(--blue); border-radius: 50%; color: var(--blue); background: var(--bg); font: 10px var(--mono); }
+.paper [data-source-file].has-feedback.has-number::before { content: attr(data-feedback-number); position: absolute; top: -15px; left: -15px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px dashed var(--blue); border-radius: 50%; color: var(--blue); background: var(--bg); font: 10px var(--mono); }
 .paper [data-source-file].has-feedback.is-focused { outline: 2px dashed var(--blue); outline-offset: 8px; background: var(--blue-soft); }
 .sidebar { position: sticky; top: 84px; align-self: start; min-width: 0; }
 .sidebar__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
