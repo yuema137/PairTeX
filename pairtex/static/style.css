@@ -27,6 +27,8 @@ button { cursor: pointer; }
 .modes { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); }
 .mode { border: 0; border-radius: 999px; padding: 5px 13px; color: var(--muted); background: transparent; font-size: 13px; }
 .mode.is-active { color: var(--fg); background: var(--blue-soft); font-weight: 600; }
+.save-edits { border: 1px solid var(--blue); border-radius: 999px; padding: 5px 13px; color: #fff; background: var(--blue); font-size: 12px; }
+.save-edits:disabled { cursor: default; opacity: .45; }
 .mode-hint { color: var(--muted); font-size: 12px; }
 .status { margin-left: auto; color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
 .layout { max-width: 1240px; margin: 0 auto; padding: 38px 28px 70px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; }

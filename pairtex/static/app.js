@@ -6,6 +6,8 @@ const state = {
   editingEntry: null,
   editBaselines: new Map(),
   editTimers: new Map(),
+  editDirty: new Set(),
+  mathDirty: new Set(),
   mathBlock: null,
   mathBaseline: "",
 };
@@ -138,9 +140,18 @@ function decoratePaper(entries) {
 }
 
 function captureEditBaselines() {
+  state.editDirty.clear();
+  state.mathDirty.clear();
   state.editBaselines = new Map(
     [...document.querySelectorAll('[data-editable="text"]')].map((node) => [node, node.innerText.trim()]),
   );
+}
+
+function updateSaveButton() {
+  const dirty = state.editDirty.size + state.mathDirty.size > 0;
+  $("#save-edits").hidden = state.mode !== "edit";
+  $("#save-edits").disabled = !dirty;
+  $("#save-edits").textContent = dirty ? `Save edits (${state.editDirty.size + state.mathDirty.size})` : "Save edits";
 }
 
 async function persistDirectEdit(block) {
@@ -202,8 +213,8 @@ function scheduleDirectEdit(event) {
   if (state.mode !== "edit") return;
   const block = event.target.closest('[data-editable="text"]');
   if (!block) return;
-  clearTimeout(state.editTimers.get(block));
-  state.editTimers.set(block, setTimeout(() => persistDirectEdit(block), 700));
+  state.editDirty.add(block);
+  updateSaveButton();
 }
 
 async function typesetMath(element) {
@@ -236,9 +247,21 @@ async function saveMathEdit(event) {
   const block = state.mathBlock;
   const source = $("#math-source").value.trim();
   if (!source) return;
+  if (source === state.mathBaseline) {
+    $("#math-dialog").close();
+    state.mathBlock = null;
+    return;
+  }
   block.dataset.mathSource = source;
   block.querySelector(".math-render").textContent = `\\[${source}\\]`;
   await typesetMath(block.querySelector(".math-render"));
+  state.mathDirty.add(block);
+  updateSaveButton();
+  $("#math-dialog").close();
+  state.mathBlock = null;
+}
+
+async function persistMathEdit(block) {
   const existing = state.project.entries.find((entry) => entry.id === block.dataset.mathEditId);
   const entry = existing || {
     id: crypto.randomUUID(),
@@ -262,24 +285,33 @@ async function saveMathEdit(event) {
     payload: {},
     created_at: new Date().toISOString(),
   };
-  entry.payload = { operation: "replace", proposed_content: source };
+  entry.payload = { operation: "replace", proposed_content: block.dataset.mathSource };
   const editing = Boolean(existing);
   const response = await fetch(editing ? `/api/entries/${encodeURIComponent(entry.id)}` : "/api/entries", {
     method: editing ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(entry),
   });
-  if (response.ok) {
-    const saved = await response.json();
-    block.dataset.mathEditId = saved.id;
-    state.project.entries = editing
-      ? state.project.entries.map((item) => item.id === saved.id ? saved : item)
-      : [...state.project.entries, saved];
-    renderEntries(state.project.entries);
-    decoratePaper(state.project.entries);
-  }
-  $("#math-dialog").close();
-  state.mathBlock = null;
+  if (!response.ok) return;
+  const saved = await response.json();
+  block.dataset.mathEditId = saved.id;
+  state.project.entries = editing
+    ? state.project.entries.map((item) => item.id === saved.id ? saved : item)
+    : [...state.project.entries, saved];
+}
+
+async function saveEdits() {
+  if (state.mode !== "edit") return;
+  const textDrafts = [...state.editDirty];
+  const mathDrafts = [...state.mathDirty];
+  for (const block of textDrafts) await persistDirectEdit(block);
+  for (const block of mathDrafts) await persistMathEdit(block);
+  state.editDirty.clear();
+  state.mathDirty.clear();
+  renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
+  updateSaveButton();
+  setMode("review");
 }
 
 function setMode(mode) {
@@ -294,11 +326,7 @@ function setMode(mode) {
     ? "Edit the manuscript directly. Changes are recorded as accepted intents."
     : "Select text to record a pending proposal for review.";
   document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item.dataset.mode === mode));
-  if (mode === "review") {
-    state.editTimers.forEach((timer) => clearTimeout(timer));
-    state.editTimers.clear();
-    document.querySelectorAll("[data-source-file]").forEach((block) => persistDirectEdit(block));
-  }
+  updateSaveButton();
 }
 
 function locateEntry(entry) {
@@ -453,6 +481,7 @@ async function init() {
   });
   $("#entry-form").addEventListener("submit", saveEntry);
   $("#paper").addEventListener("input", scheduleDirectEdit);
+  $("#save-edits").addEventListener("click", saveEdits);
   $("#paper").addEventListener("click", (event) => {
     const math = event.target.closest('[data-editable="math"]');
     if (math) openMathEditor(math);
@@ -479,6 +508,10 @@ async function init() {
     if (action === "resolve") toggleResolved(entry);
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.mode === "review" && (state.editDirty.size || state.mathDirty.size)) {
+      alert("Save your Edit mode changes before switching to Review.");
+      return;
+    }
     setMode(button.dataset.mode);
   }));
 }
