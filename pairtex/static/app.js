@@ -10,6 +10,7 @@ const state = {
   mathDirty: new Set(),
   mathBlock: null,
   mathBaseline: "",
+  targetByEntryId: new Map(),
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -116,6 +117,7 @@ function renderEntries(entries) {
 
 function decoratePaper(entries) {
   const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
+  state.targetByEntryId.clear();
   document.querySelectorAll("[data-source-file]").forEach((node) => {
     node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
@@ -130,7 +132,7 @@ function decoratePaper(entries) {
     });
     if (target) {
       target.classList.add("has-feedback");
-      target.dataset.feedbackId = entry.id;
+      state.targetByEntryId.set(entry.id, target);
       if (entry.kind === "change") {
         target.classList.add("has-number");
         target.dataset.feedbackNumber = String(++changeNumber);
@@ -330,7 +332,7 @@ function setMode(mode) {
 }
 
 function locateEntry(entry) {
-  const target = document.querySelector(`[data-feedback-id="${CSS.escape(entry.id)}"]`);
+  const target = state.targetByEntryId.get(entry.id);
   const card = document.querySelector(`[data-entry-id="${CSS.escape(entry.id)}"]`);
   if (!target || !card) return;
   document.querySelectorAll(".has-feedback").forEach((node) => node.classList.remove("is-focused"));
