@@ -31,6 +31,9 @@ button { cursor: pointer; }
 .status { margin-left: auto; color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
 .layout { max-width: 1240px; margin: 0 auto; padding: 38px 28px 70px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; }
 .paper { max-width: 760px; min-width: 0; }
+.paper.is-editing { padding: 20px 18px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,.18); }
+.paper.is-editing [data-source-file] { outline: 1px dashed transparent; outline-offset: 7px; }
+.paper.is-editing [data-source-file]:hover, .paper.is-editing [data-source-file]:focus-within { outline-color: var(--border-hi); }
 .paper h1, .paper h2, .paper h3 { line-height: 1.25; letter-spacing: -.02em; }
 .paper h1 { font-size: 38px; }
 .paper h2 { margin-top: 2em; font-size: 25px; }

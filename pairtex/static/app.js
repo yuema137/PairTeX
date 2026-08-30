@@ -4,6 +4,8 @@ const state = {
   selection: null,
   project: null,
   editingEntry: null,
+  editBaselines: new Map(),
+  editTimers: new Map(),
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -69,6 +71,10 @@ function selectedAnchor() {
 }
 
 function showTools() {
+  if (state.mode === "edit") {
+    $("#selection-tools").hidden = true;
+    return;
+  }
   const anchor = selectedAnchor();
   const selection = window.getSelection();
   if (!anchor || !selection?.rangeCount) {
@@ -125,6 +131,90 @@ function decoratePaper(entries) {
       }
     }
   });
+}
+
+function captureEditBaselines() {
+  state.editBaselines = new Map(
+    [...document.querySelectorAll("[data-source-file]")].map((node) => [node, node.innerText.trim()]),
+  );
+}
+
+async function persistDirectEdit(block) {
+  const originalText = state.editBaselines.get(block) || "";
+  const currentText = block.innerText.trim();
+  const existing = state.project.entries.find((entry) => entry.id === block.dataset.directEditId);
+  if (currentText === originalText) {
+    if (existing) {
+      await fetch(`/api/entries/${encodeURIComponent(existing.id)}`, { method: "DELETE" });
+      state.project.entries = state.project.entries.filter((entry) => entry.id !== existing.id);
+      delete block.dataset.directEditId;
+      renderEntries(state.project.entries);
+      decoratePaper(state.project.entries);
+    }
+    return;
+  }
+  const entry = existing || {
+    id: crypto.randomUUID(),
+    kind: "change",
+    status: "accepted",
+    head_commit: state.project.head_commit,
+    worktree_dirty: state.project.worktree_dirty,
+    author: state.project.author || undefined,
+    anchor: {
+      file_hint: block.dataset.sourceFile,
+      line_start_hint: Number(block.dataset.sourceLine || 0) || null,
+      line_end_hint: Number(block.dataset.sourceLineEnd || block.dataset.sourceLine || 0) || null,
+      section: (block.dataset.section || "").split("/").filter(Boolean),
+      selected_rendered_text: originalText,
+      selected_source_text: block.dataset.sourceText || originalText,
+      rendered_offset: 0,
+      prefix_context: "",
+      suffix_context: "",
+    },
+    payload: {},
+    created_at: new Date().toISOString(),
+  };
+  entry.payload = { operation: "replace", proposed_content: currentText };
+  const editing = Boolean(existing);
+  const response = await fetch(editing ? `/api/entries/${encodeURIComponent(entry.id)}` : "/api/entries", {
+    method: editing ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  });
+  if (!response.ok) return;
+  const saved = await response.json();
+  block.dataset.directEditId = saved.id;
+  if (editing) {
+    state.project.entries = state.project.entries.map((item) => item.id === saved.id ? saved : item);
+  } else {
+    state.project.entries.push(saved);
+  }
+  renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
+}
+
+function scheduleDirectEdit(event) {
+  if (state.mode !== "edit") return;
+  const block = event.target.closest("[data-source-file]");
+  if (!block) return;
+  clearTimeout(state.editTimers.get(block));
+  state.editTimers.set(block, setTimeout(() => persistDirectEdit(block), 700));
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  $("#paper").contentEditable = mode === "edit" ? "true" : "false";
+  $("#paper").classList.toggle("is-editing", mode === "edit");
+  $("#change-action").textContent = mode === "edit" ? "Edit text" : "Suggest edit";
+  $("#mode-hint").textContent = mode === "edit"
+    ? "Edit the manuscript directly. Changes are recorded as accepted intents."
+    : "Select text to record a pending proposal for review.";
+  document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item.dataset.mode === mode));
+  if (mode === "review") {
+    state.editTimers.forEach((timer) => clearTimeout(timer));
+    state.editTimers.clear();
+    document.querySelectorAll("[data-source-file]").forEach((block) => persistDirectEdit(block));
+  }
 }
 
 function locateEntry(entry) {
@@ -236,15 +326,18 @@ async function saveEntry(event) {
 async function init() {
   state.project = await (await fetch("/api/state")).json();
   $("#paper").innerHTML = state.project.manuscript_html;
+  captureEditBaselines();
   $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
   decoratePaper(state.project.entries);
+  setMode("edit");
   document.addEventListener("selectionchange", showTools);
   $("#selection-tools").addEventListener("click", (event) => {
     const action = event.target.closest("button")?.dataset.action;
     if (action) openEntryDialog(action === "change" ? "change" : "comment");
   });
   $("#entry-form").addEventListener("submit", saveEntry);
+  $("#paper").addEventListener("input", scheduleDirectEdit);
   $("#cancel-entry").addEventListener("click", () => {
     state.editingEntry = null;
     $("#entry-dialog").close();
@@ -260,12 +353,7 @@ async function init() {
     if (action === "locate") locateEntry(entry);
   });
   document.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
-    state.mode = button.dataset.mode;
-    $("#change-action").textContent = state.mode === "edit" ? "Edit text" : "Suggest edit";
-    $("#mode-hint").textContent = state.mode === "edit"
-      ? "Direct edits are recorded as accepted intents."
-      : "Edits are recorded as pending proposals for review.";
-    document.querySelectorAll(".mode").forEach((item) => item.classList.toggle("is-active", item === button));
+    setMode(button.dataset.mode);
   }));
 }
 
