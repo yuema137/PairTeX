@@ -113,13 +113,151 @@ It does not need to reproduce PDF layout. The default visual language should
 be restrained, readable, responsive, and easy to theme through a small set of
 design tokens.
 
-## Open decisions after pilot inspection
+## Demo acceptance criteria
 
-- the exact Siderius build and renderer command;
-- the first supported TeX-to-HTML tool;
-- the on-disk entry layout, such as one file per entry or append-only JSONL;
-- the minimum source mapping metadata available from the selected renderer;
-- the precise Edit-mode behavior.
+### Demo 1: minimal interaction fixture
 
-These decisions should be tested against the Siderius repository as a real
-pilot, while keeping the resulting implementation project-agnostic.
+Demo 1 proves PairTeX's own interaction and data model with a small,
+independent LaTeX fixture. It passes when a user can:
+
+1. render a small manuscript as readable HTML;
+2. select rendered text;
+3. create a comment or a change proposal;
+4. persist a structured entry;
+5. reload the local web app and see the entry again;
+6. inspect the entry's commit and source-location hints.
+
+Demo 1 does not prove arbitrary LaTeX compatibility. It does not require a
+general source-rewriting engine or sophisticated source mapping.
+
+### Demo 2: Siderius pilot
+
+Demo 2 uses a clean, explicit Siderius commit in a disposable checkout. It
+passes when the same PairTeX workflow can handle the active arXiv manuscript's
+multi-file source, mathematics, figures, citations, bibliography, and existing
+build workflow without importing Siderius-specific logic into PairTeX.
+
+## Renderer adapter comparison
+
+The renderer is an adapter. PairTeX owns the adapter contract and the HTML
+interaction layer; it does not own a TeX parser.
+
+| Option | Strengths for this project | Risks or costs | Design position |
+|---|---|---|---|
+| LaTeXML | Produces an intermediate document model and HTML/MathML outputs; its extension model can represent package-specific behavior. | Separate parser/runtime and package bindings add installation and compatibility work. | Strong candidate when semantic output and extensibility outweigh setup cost. |
+| TeX4ht via `make4ht` | Runs LaTeX itself, supports HTML5/XML-oriented output, MathML or MathJax, and configurable build files. | Output depends on TeX4ht configuration and the local TeX installation; source metadata and package compatibility need testing. | Practical lightweight candidate, but never a PairTeX architectural dependency. |
+| lwarp | Uses LaTeX processing to generate HTML and can interpret document meaning through LaTeX-side support. | Requires adding and configuring a package in the target document; compatibility with arbitrary templates and packages must be established. | Candidate for projects willing to opt into lwarp-specific source configuration, not assumed universal. |
+
+The first adapter should be selected by a small compatibility matrix covering
+the Siderius paper and the independent fixture. The decision must consider
+semantic readability, math, citations, figures, complex templates,
+source-location hints, installation burden, and local/incremental serving. It
+must not be based only on which command happens to be installed locally.
+
+The initial read-only probes found that this machine's `htlatex` invocation
+reached Siderius mathematics but failed in an `align` environment, while
+`make4ht` was present but missing a local `luaxml-domobject` runtime component.
+These are renderer/environment compatibility findings, not reasons to add
+renderer-specific logic to PairTeX.
+
+## Minimal feedback model
+
+The on-disk representation should favor Git-friendly independent entries. One
+file per entry is the current leading option because parallel contributors can
+add feedback without appending to the same file. The exact filename and
+extension remain open.
+
+The minimum conceptual record is:
+
+```json
+{
+  "id": "entry-id",
+  "kind": "comment",
+  "status": "open",
+  "base_commit": "abc123",
+  "author": {
+    "github_username": "example"
+  },
+  "anchor": {
+    "file_hint": "main.tex",
+    "line_start_hint": 12,
+    "line_end_hint": 12,
+    "section": ["Introduction"],
+    "selected_rendered_text": "Evaluation is often treated as an endpoint.",
+    "selected_source_text": "Evaluation is often treated as an endpoint.",
+    "prefix_context": "...",
+    "suffix_context": "..."
+  },
+  "payload": {
+    "comment": "This repeats the framing above."
+  },
+  "created_at": "2026-08-30T00:00:00Z"
+}
+```
+
+`base_commit` identifies the formal manuscript version. File, section, quoted
+text, surrounding context, and line hints identify the target within that
+version. Line numbers are hints, not identity. PairTeX may report an entry as
+potentially stale, but does not decide how a user or agent should reconcile it.
+
+For a change proposal, `payload` contains an operation such as `insert`,
+`delete`, or `replace`, plus proposed content. PairTeX records the intent; it
+does not apply the change to `.tex` or `.bib` files.
+
+## Edit and Review semantics
+
+In Edit mode, the UI presents a human change as an authoritative edit. The
+MVP may still persist it as a structured change intent. A coding agent or human
+developer applies that intent to the canonical LaTeX source.
+
+In Review mode, the UI presents the same kinds of operations as pending
+proposals that can be accepted, rejected, or left open. Comments can exist in
+either mode and can target selected text or a document location/block.
+
+This distinction is a presentation and lifecycle distinction. It is not a
+reason to implement two source-editing engines.
+
+## Runtime ownership
+
+PairTeX should own only:
+
+- project and configuration discovery;
+- a renderer adapter;
+- a localhost reading and review UI;
+- human identity metadata collection;
+- feedback persistence and lifecycle display;
+- rebuild and refresh hooks.
+
+The user's coding agent or developer owns:
+
+- locating source robustly when context has moved;
+- editing `.tex` and `.bib` files;
+- maintaining multi-file consistency;
+- resolving stale feedback;
+- compiling and debugging manuscript source.
+
+## Technical risks
+
+The two risks that can threaten the minimal design are:
+
+1. renderer compatibility with real papers, especially complex templates,
+   mathematics, figures, citations, and bibliography;
+2. insufficient source-location hints in the generated HTML.
+
+The second risk is bounded by retaining redundant human-readable context and
+letting the consuming agent perform fuzzy location. PairTeX does not need
+deterministic HTML-to-TeX rewriting.
+
+## Explicit non-goals
+
+The MVP will not include an editor plugin, central service, account database,
+OAuth authentication, real-time collaboration, CRDTs, automatic source
+patching, a custom TeX parser, a general merge engine, or an agent execution
+framework.
+
+## Design status
+
+**DESIGN READY FOR REVIEW — DO NOT IMPLEMENT**
+
+Implementation approval requires review of this document, the renderer
+comparison, and the Demo 1 / Demo 2 acceptance criteria.
