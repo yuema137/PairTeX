@@ -25,8 +25,26 @@ function sortEntries(entries) {
     const leftLine = Number.isFinite(leftAnchor.line_start_hint) && leftAnchor.line_start_hint > 0 ? leftAnchor.line_start_hint : Number.MAX_SAFE_INTEGER;
     const rightLine = Number.isFinite(rightAnchor.line_start_hint) && rightAnchor.line_start_hint > 0 ? rightAnchor.line_start_hint : Number.MAX_SAFE_INTEGER;
     if (leftLine !== rightLine) return leftLine - rightLine;
+    const leftOffset = renderedOffset(left);
+    const rightOffset = renderedOffset(right);
+    if (leftOffset !== rightOffset) return leftOffset - rightOffset;
     return (left.created_at || "").localeCompare(right.created_at || "");
   });
+}
+
+function renderedOffset(entry) {
+  const storedOffset = entry.anchor?.rendered_offset;
+  if (Number.isFinite(storedOffset) && storedOffset >= 0) return storedOffset;
+  const target = [...document.querySelectorAll("[data-source-file]")].find((node) => {
+    const section = (node.dataset.section || "").split("/").filter(Boolean);
+    return node.dataset.sourceFile === entry.anchor?.file_hint
+      && section.join("/") === (entry.anchor?.section || []).join("/");
+  });
+  if (!target) return Number.MAX_SAFE_INTEGER;
+  const text = target.textContent.trim();
+  const selected = (entry.anchor?.selected_rendered_text || "").trim();
+  const offset = selected ? text.indexOf(selected) : -1;
+  return offset >= 0 ? offset : Number.MAX_SAFE_INTEGER;
 }
 
 function selectedAnchor() {
@@ -44,6 +62,7 @@ function selectedAnchor() {
     section: (node.dataset.section || "").split("/").filter(Boolean),
     selected_rendered_text: text,
     selected_source_text: node.dataset.sourceText || text,
+    rendered_offset: index >= 0 ? index : null,
     prefix_context: index > 0 ? blockText.slice(Math.max(0, index - 80), index) : "",
     suffix_context: index >= 0 ? blockText.slice(index + text.length, index + text.length + 80) : "",
   };
