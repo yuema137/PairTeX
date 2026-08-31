@@ -1,95 +1,107 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
   <title id="title">PairTeX human-agent writing loop</title>
-  <desc id="desc">A human interacts with a disposable HTML artifact on the left side of the workflow, while a coding agent works with the canonical TeX repository on the right. PairTeX connects their feedback without modifying the original source.</desc>
+  <desc id="desc">Humans can edit the canonical TeX directly or leave feedback in a disposable HTML artifact. Coding agents can consume the structured feedback and modify TeX. PairTeX owns the TeX to HTML adapter and the feedback artifact contract, but never modifies the source repository.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#101d2b"/><stop offset="1" stop-color="#1d3342"/>
-    </linearGradient>
-    <linearGradient id="html" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#edf8ff"/><stop offset="1" stop-color="#d8ebf6"/>
-    </linearGradient>
-    <linearGradient id="tex" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff9ec"/><stop offset="1" stop-color="#f4e8cf"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#07111b" flood-opacity=".28"/>
-    </filter>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-      <path d="M0 0 L10 5 L0 10 Z" fill="#9ac9c4"/>
-    </marker>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#101d2b"/><stop offset="1" stop-color="#1d3342"/></linearGradient>
+    <linearGradient id="html" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#edf8ff"/><stop offset="1" stop-color="#d8ebf6"/></linearGradient>
+    <linearGradient id="tex" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff9ec"/><stop offset="1" stop-color="#f4e8cf"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#07111b" flood-opacity=".28"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#9ac9c4"/></marker>
     <style>
       text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .title { font-size: 34px; font-weight: 750; fill: #f5f9fc; }
+      .title { font-size: 35px; font-weight: 750; fill: #f5f9fc; }
       .subtitle { font-size: 18px; fill: #c0d0da; }
-      .role { font-size: 17px; font-weight: 750; letter-spacing: 1.4px; }
-      .card-title { font-size: 27px; font-weight: 750; }
+      .role { font-size: 16px; font-weight: 750; letter-spacing: 1.4px; }
+      .card-title { font-size: 26px; font-weight: 750; }
       .body { font-size: 18px; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; }
-      .label { font-size: 16px; font-weight: 650; fill: #a9c6cc; }
-      .small { font-size: 15px; fill: #c0d0da; }
+      .label { font-size: 16px; font-weight: 700; fill: #d9eeee; }
+      .scope-label { font-size: 15px; font-weight: 750; letter-spacing: 1.2px; fill: #a9d8d1; }
+      .small { font-size: 16px; fill: #c0d0da; }
+      .label-box { fill: #203d4a; stroke: #487078; stroke-width: 1.5; }
     </style>
   </defs>
 
-  <rect width="1200" height="720" rx="30" fill="url(#bg)"/>
-  <text x="70" y="64" class="title">PairTeX</text>
-  <text x="70" y="98" class="subtitle">Human–agent pair writing for existing LaTeX papers</text>
-  <rect x="914" y="48" width="216" height="38" rx="19" fill="#8ec8f0" opacity=".16" stroke="#8ec8f0" stroke-opacity=".5"/>
-  <text x="1022" y="73" text-anchor="middle" font-size="16" font-weight="650" fill="#d0ecfa">LaTeX stays canonical</text>
+  <rect width="1200" height="800" rx="30" fill="url(#bg)"/>
+  <text x="70" y="62" class="title">PairTeX</text>
+  <text x="70" y="96" class="subtitle">A clean TeX → HTML adaptation layer for human–agent pair writing</text>
+  <rect x="934" y="45" width="196" height="38" rx="19" fill="#8ec8f0" opacity=".16" stroke="#8ec8f0" stroke-opacity=".5"/>
+  <text x="1032" y="70" text-anchor="middle" font-size="16" font-weight="650" fill="#d0ecfa">source stays untouched</text>
+
+  <!-- PairTeX owns the projection and the artifact contract. -->
+  <rect x="350" y="130" width="500" height="460" rx="28" fill="#17313d" fill-opacity=".52" stroke="#6da9a5" stroke-width="2" stroke-dasharray="9 8"/>
+  <text x="600" y="164" text-anchor="middle" class="scope-label">PAIRTeX SCOPE</text>
+  <text x="600" y="188" text-anchor="middle" class="small">adaptation + human interaction + artifact format</text>
 
   <!-- Human -->
   <g filter="url(#shadow)">
-    <rect x="70" y="190" width="250" height="350" rx="24" fill="#dceef7"/>
-    <text x="195" y="318" text-anchor="middle" font-size="92">🧑</text>
-    <text x="195" y="370" text-anchor="middle" class="role" fill="#416b82">HUMAN</text>
-    <text x="195" y="412" text-anchor="middle" class="card-title" fill="#142d3d">Read and review</text>
-    <text x="195" y="451" text-anchor="middle" class="body" fill="#34576b">Edit · suggest · comment</text>
-    <text x="195" y="493" text-anchor="middle" class="small" fill="#416b82">No source files changed</text>
+    <rect x="70" y="205" width="250" height="335" rx="24" fill="#dceef7"/>
+    <text x="195" y="325" text-anchor="middle" font-size="92">🧑</text>
+    <text x="195" y="374" text-anchor="middle" class="role" fill="#416b82">HUMAN</text>
+    <text x="195" y="416" text-anchor="middle" class="card-title" fill="#142d3d">Read and decide</text>
+    <text x="195" y="454" text-anchor="middle" class="body" fill="#34576b">Edit HTML · review · comment</text>
+    <text x="195" y="495" text-anchor="middle" font-size="16" fill="#416b82">or edit TeX directly</text>
   </g>
 
   <!-- HTML artifact -->
   <g filter="url(#shadow)">
-    <rect x="410" y="145" width="380" height="220" rx="22" fill="url(#html)"/>
-    <rect x="410" y="145" width="380" height="13" rx="6" fill="#9ec6df"/>
-    <text x="444" y="198" class="role" fill="#416b82">HTML ARTIFACT</text>
-    <text x="444" y="242" class="card-title" fill="#142d3d">Interactive paper view</text>
-    <text x="444" y="278" class="body" fill="#34576b">Readable layout for human feedback</text>
-    <rect x="444" y="304" width="286" height="31" rx="8" fill="#fff" stroke="#a4c9dc"/>
-    <text x="460" y="326" font-size="16" fill="#416b82">“Please clarify this claim.”</text>
+    <rect x="390" y="205" width="420" height="145" rx="20" fill="url(#html)"/>
+    <rect x="390" y="205" width="420" height="12" rx="6" fill="#9ec6df"/>
+    <text x="424" y="252" class="role" fill="#416b82">HTML ARTIFACT</text>
+    <text x="424" y="290" class="card-title" fill="#142d3d">Interactive paper view</text>
+    <text x="424" y="324" class="body" fill="#34576b">Rendered prose + math for human feedback</text>
   </g>
 
-  <!-- TeX artifact -->
+  <!-- Feedback contract -->
   <g filter="url(#shadow)">
-    <rect x="410" y="420" width="380" height="220" rx="22" fill="url(#tex)"/>
-    <text x="444" y="473" class="role" fill="#876d3d">TEX REPOSITORY</text>
-    <text x="444" y="517" class="card-title" fill="#3b3020">Canonical source</text>
-    <text x="444" y="553" class="mono" fill="#806c4a">main.tex · sections/ · .bib</text>
-    <text x="444" y="581" class="mono" fill="#806c4a">figures/ · styles/ · Git</text>
-    <rect x="444" y="600" width="194" height="26" rx="13" fill="#ead9b3"/>
-    <text x="541" y="619" text-anchor="middle" font-size="15" font-weight="650" fill="#725d34">PairTeX: read only</text>
+    <rect x="390" y="400" width="420" height="145" rx="20" fill="#e1f1e7"/>
+    <text x="424" y="447" class="role" fill="#467762">FEEDBACK ARTIFACT</text>
+    <text x="424" y="485" class="card-title" fill="#18352b">Structured, source-anchored input</text>
+    <text x="424" y="519" class="mono" fill="#315d49">.pairtex/feedback/*.json + agent skill</text>
   </g>
 
   <!-- Coding agent -->
   <g filter="url(#shadow)">
-    <rect x="880" y="190" width="250" height="350" rx="24" fill="#e6e1f7"/>
-    <text x="1005" y="318" text-anchor="middle" font-size="92">🤖</text>
-    <text x="1005" y="370" text-anchor="middle" class="role" fill="#635d91">CODING AGENT</text>
-    <text x="1005" y="412" text-anchor="middle" class="card-title" fill="#292442">Work in the repo</text>
-    <text x="1005" y="451" text-anchor="middle" class="body" fill="#504b70">Inspect · edit TeX · build</text>
-    <text x="1005" y="493" text-anchor="middle" class="small" fill="#514b7e">Commit, then refresh HTML</text>
+    <rect x="880" y="205" width="250" height="335" rx="24" fill="#e6e1f7"/>
+    <text x="1005" y="325" text-anchor="middle" font-size="92">🤖</text>
+    <text x="1005" y="374" text-anchor="middle" class="role" fill="#635d91">CODING AGENT</text>
+    <text x="1005" y="416" text-anchor="middle" class="card-title" fill="#292442">Consume and change</text>
+    <text x="1005" y="454" text-anchor="middle" class="body" fill="#504b70">Read artifacts · edit TeX · build</text>
+    <text x="1005" y="495" text-anchor="middle" font-size="16" fill="#514b7e">resolve or reply to feedback</text>
   </g>
 
-  <!-- Orthogonal, edge-to-edge connections. -->
-  <path d="M320 275 H410" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
-  <text x="365" y="258" text-anchor="middle" class="label">read / feedback</text>
+  <!-- Canonical TeX stays outside PairTeX. -->
+  <g filter="url(#shadow)">
+    <rect x="390" y="650" width="420" height="105" rx="20" fill="url(#tex)"/>
+    <text x="424" y="687" class="role" fill="#876d3d">CANONICAL TEX REPOSITORY</text>
+    <text x="424" y="720" class="mono" fill="#806c4a">main.tex · sections/ · .bib · figures/ · Git</text>
+    <text x="424" y="745" font-size="15" font-weight="650" fill="#725d34">PairTeX reads; user/agent owns source changes</text>
+  </g>
 
-  <path d="M790 275 H880" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
-  <text x="835" y="258" text-anchor="middle" class="label">structured input</text>
+  <!-- All connectors are orthogonal and all labels sit in separate boxes. -->
+  <path d="M320 285 H390" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="321" y="238" width="68" height="30" rx="10" class="label-box"/>
+  <text x="355" y="259" text-anchor="middle" class="label">read</text>
 
-  <path d="M880 455 H835 V530 H790" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
-  <text x="835" y="565" text-anchor="middle" class="label">change source</text>
+  <path d="M810 285 H880" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="805" y="238" width="80" height="30" rx="10" class="label-box"/>
+  <text x="845" y="259" text-anchor="middle" class="label">consume</text>
 
-  <path d="M410 530 H365 V455 H320" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
-  <text x="365" y="565" text-anchor="middle" class="label">new projection</text>
+  <path d="M600 350 V400" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="620" y="356" width="155" height="30" rx="10" class="label-box"/>
+  <text x="697" y="377" text-anchor="middle" class="label">comment / review</text>
 
-  <text x="600" y="684" text-anchor="middle" class="small">Human interacts through HTML. The agent works through TeX. PairTeX keeps the boundary clean.</text>
+  <path d="M880 470 H850 V702 H810" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="866" y="572" width="132" height="30" rx="10" class="label-box"/>
+  <text x="932" y="593" text-anchor="middle" class="label">change TeX</text>
+
+  <path d="M390 702 H350 V625 M350 595 V285 H390" fill="none" stroke="#9ac9c4" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="266" y="581" width="168" height="30" rx="10" class="label-box"/>
+  <text x="350" y="602" text-anchor="middle" class="label">render + refresh</text>
+
+  <path d="M320 495 H335 V702 H390" fill="none" stroke="#d8b56a" stroke-width="3" stroke-dasharray="8 7" marker-end="url(#arrow)"/>
+  <rect x="178" y="584" width="126" height="30" rx="10" class="label-box"/>
+  <text x="241" y="605" text-anchor="middle" class="label">direct TeX edit</text>
+
+  <text x="600" y="785" text-anchor="middle" class="small">PairTeX does not rewrite TeX. It adapts the projection and defines the feedback contract agents can consume.</text>
 </svg>
