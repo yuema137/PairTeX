@@ -5,6 +5,8 @@ const state = {
   project: null,
   editingEntry: null,
   editBaselines: new Map(),
+  editMarkupBaselines: new Map(),
+  mathSourceBaselines: new Map(),
   editTimers: new Map(),
   editDirty: new Set(),
   mathDirty: new Set(),
@@ -144,6 +146,12 @@ function decoratePaper(entries) {
 function captureEditBaselines() {
   state.editDirty.clear();
   state.mathDirty.clear();
+  state.editMarkupBaselines = new Map(
+    [...document.querySelectorAll('[data-editable="text"], [data-editable="math"]')].map((node) => [node, node.innerHTML]),
+  );
+  state.mathSourceBaselines = new Map(
+    [...document.querySelectorAll('[data-editable="math"]')].map((node) => [node, node.dataset.mathSource || ""]),
+  );
   state.editBaselines = new Map(
     [...document.querySelectorAll('[data-editable="text"]')].map((node) => [node, node.innerText.trim()]),
   );
@@ -154,6 +162,25 @@ function updateSaveButton() {
   $("#save-edits").hidden = state.mode !== "edit";
   $("#save-edits").disabled = !dirty;
   $("#save-edits").textContent = dirty ? `Save edits (${state.editDirty.size + state.mathDirty.size})` : "Save edits";
+  $("#discard-edits").hidden = state.mode !== "edit";
+  $("#discard-edits").disabled = !dirty;
+}
+
+function discardEdits() {
+  if (state.mode !== "edit") return;
+  for (const block of state.editDirty) {
+    const baseline = state.editMarkupBaselines.get(block);
+    if (baseline !== undefined) block.innerHTML = baseline;
+  }
+  for (const block of state.mathDirty) {
+    const baselineMarkup = state.editMarkupBaselines.get(block);
+    const baselineSource = state.mathSourceBaselines.get(block);
+    if (baselineMarkup !== undefined) block.innerHTML = baselineMarkup;
+    if (baselineSource !== undefined) block.dataset.mathSource = baselineSource;
+  }
+  state.editDirty.clear();
+  state.mathDirty.clear();
+  updateSaveButton();
 }
 
 async function persistDirectEdit(block) {
@@ -457,6 +484,7 @@ async function init() {
   $("#entry-form").addEventListener("submit", saveEntry);
   $("#paper").addEventListener("input", scheduleDirectEdit);
   $("#save-edits").addEventListener("click", saveEdits);
+  $("#discard-edits").addEventListener("click", discardEdits);
   $("#paper").addEventListener("click", (event) => {
     const math = event.target.closest('[data-editable="math"]');
     if (math) openMathEditor(math);
