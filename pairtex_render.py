@@ -88,9 +88,10 @@ def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | 
         environment = os.environ.copy()
         if texinputs:
             environment["TEXINPUTS"] = texinputs + environment.get("TEXINPUTS", "")
+        build_directory = ".pairtex-render-build"
 
         result = subprocess.run(
-            ["make4ht", disposable_input.name, tex4ht_options],
+            ["make4ht", "-B", build_directory, disposable_input.name, tex4ht_options],
             cwd=cwd,
             env=environment,
             capture_output=True,
@@ -99,7 +100,7 @@ def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | 
         )
         transcript = result.stdout + result.stderr
         errors = renderer_errors(transcript)
-        html_path = cwd / f"{disposable_input.stem}.html"
+        html_path = cwd / build_directory / f"{disposable_input.stem}.html"
         if result.returncode != 0:
             errors.append(f"renderer exited with status {result.returncode}")
         if not html_path.is_file():
@@ -122,7 +123,7 @@ def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | 
             destination = output / source
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, destination)
-        css_files = sorted(cwd.glob("*.css"))
+        css_files = sorted(html_path.parent.glob("*.css"))
         for css_path in css_files:
             shutil.copy2(css_path, output / css_path.name)
 
