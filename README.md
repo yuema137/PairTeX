@@ -90,6 +90,67 @@ coordination primitive. Git remains responsible for exchanging committed source
 and feedback artifacts; PairTeX remains responsible for presenting the local
 projection and capturing human intent.
 
+## Copy-paste turn prompts
+
+These prompts are intentionally short. They assume the coding agent has access
+to [`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md). Mentioning
+the skill or asking the agent to read that path makes the intended integration
+contract explicit.
+
+### 1. Start a PairTeX turn
+
+```text
+Read and follow skills/pairtex-agent/SKILL.md. Use PairTeX to render this existing LaTeX repository into a disposable local HTML projection. Discover the manuscript entry point and use the repository's existing build workflow. Do not modify any canonical source files. Start the PairTeX localhost view and report the URL, source HEAD commit, dirty state, render command, and HTML output path.
+```
+
+Expected result: the agent identifies the existing project configuration,
+builds or renders without changing `.tex`/`.bib` source, and starts one local
+PairTeX view. The HTML path may be temporary and does not become a second
+manuscript source.
+
+### 2. Consume one human feedback turn
+
+After using the HTML view to add comments, Edit-mode changes, or Review-mode
+proposals, ask the agent:
+
+```text
+Read and follow skills/pairtex-agent/SKILL.md. Consume the open PairTeX feedback in .pairtex/feedback/. For each entry, use its commit and redundant source anchors to inspect the current repository, apply appropriate changes only to canonical source, and preserve existing project conventions. Build the paper and regenerate the PairTeX HTML projection. Resolve only feedback that is actually addressed; for anything ambiguous or intentionally deferred, leave it open and append a concise thread reply. Report the source diff, build result, render path, and feedback decisions.
+```
+
+Expected result: the agent reads comments and change intents, edits source as
+needed, rebuilds the paper, and either resolves addressed entries or appends a
+thread reply while leaving unresolved entries open. PairTeX itself never makes
+the source edit or the resolution decision.
+
+### 3. Close the turn
+
+The recommended order is:
+
+```text
+agent modifies canonical source
+    -> existing build succeeds
+    -> agent regenerates HTML from the resulting source
+    -> human/agent inspects the new projection
+    -> source changes are committed
+    -> addressed feedback is marked resolved with that commit
+    -> human clicks Refresh in PairTeX
+```
+
+The source commit closes the turn. If the agent has not addressed an entry, it
+must not resolve it just because the turn is ending; it should append a thread
+reply and keep it open. The human should click `Refresh` only after the agent
+has regenerated the HTML. Refresh rereads the current HTML and feedback; it
+does not compile TeX or consume feedback.
+
+### 4. Verify that the skill was actually used
+
+The first prompt should produce a render-only report and no source diff. The
+second prompt should mention the feedback files it inspected, distinguish
+`kind: comment` from `kind: change`, distinguish `decision: accepted` from
+`decision: pending`, use anchors rather than trusting line numbers alone, and
+report either resolution metadata or a thread reply. An agent that edits source
+without reading the feedback contract has not completed the PairTeX workflow.
+
 ## Integration contract
 
 The target project provides its manuscript configuration and existing build
