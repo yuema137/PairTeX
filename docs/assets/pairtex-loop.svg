@@ -24,14 +24,14 @@
 
   <rect width="1200" height="800" rx="30" fill="url(#bg)"/>
   <text x="70" y="62" class="title">PairTeX</text>
-  <text x="70" y="96" class="subtitle">A clean TeX → HTML adaptation layer for human–agent pair writing</text>
+  <text x="70" y="96" class="subtitle">A tiny, hot-pluggable TeX → HTML layer for human–agent pair writing</text>
   <rect x="934" y="45" width="196" height="38" rx="19" fill="#8ec8f0" opacity=".16" stroke="#8ec8f0" stroke-opacity=".5"/>
   <text x="1032" y="70" text-anchor="middle" font-size="16" font-weight="650" fill="#d0ecfa">source stays untouched</text>
 
   <!-- PairTeX owns the projection and the artifact contract. -->
   <rect x="350" y="130" width="500" height="460" rx="28" fill="#17313d" fill-opacity=".52" stroke="#6da9a5" stroke-width="2" stroke-dasharray="9 8"/>
   <text x="600" y="164" text-anchor="middle" class="scope-label">PAIRTeX SCOPE</text>
-  <text x="600" y="188" text-anchor="middle" class="small">adaptation + human interaction + artifact format</text>
+  <text x="600" y="188" text-anchor="middle" class="small">drop in · use locally · unplug cleanly · no project rewrite</text>
 
   <!-- Human -->
   <g filter="url(#shadow)">
