@@ -548,6 +548,10 @@ async function init() {
       stylesheet.href = link.getAttribute("href");
       document.head.append(stylesheet);
     });
+    const layoutOverride = document.createElement("style");
+    layoutOverride.dataset.pairtex = "layout-override";
+    layoutOverride.textContent = "body { max-width: none !important; margin: 0 !important; padding: 0 !important; }";
+    document.head.append(layoutOverride);
   }
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
   organizePaper();
