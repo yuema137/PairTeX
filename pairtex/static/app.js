@@ -17,6 +17,7 @@ const state = {
 
 function initThemeControls() {
   const root = document.documentElement;
+  document.body.dataset.pairtexHost = "true";
   const modeSelect = $("#theme-mode");
   const paletteSelect = $("#theme-palette");
   const palettes = window.PairTeXPalettes || {};
@@ -632,24 +633,29 @@ async function refreshView() {
     const layoutOverride = document.createElement("style");
     layoutOverride.dataset.pairtex = "layout-override";
     layoutOverride.textContent = `
-      html, body {
+      html[data-pairtex-host], body[data-pairtex-host] {
+        background: var(--bg) !important;
+        color: var(--fg) !important;
+        color-scheme: inherit !important;
+      }
+      body[data-pairtex-host] #paper {
         background: var(--bg) !important;
         color: var(--fg) !important;
       }
-      #paper {
-        color: var(--fg) !important;
-      }
-      #paper :where(h1, h2, h3, h4, h5, h6, p, li, dd, dt, td, th, figcaption, caption, blockquote, div, span) {
+      body[data-pairtex-host] #paper :where(h1, h2, h3, h4, h5, h6, p, li, dd, dt, td, th, figcaption, caption, blockquote, div, span) {
         color: inherit !important;
       }
-      #paper a { color: var(--accent) !important; }
-      body { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+      body[data-pairtex-host] #paper a { color: var(--accent) !important; }
+      body[data-pairtex-host] { max-width: none !important; margin: 0 !important; padding: 0 !important; }
     `;
     document.head.append(layoutOverride);
   }
+  document.documentElement.dataset.pairtexHost = "true";
   document.body.style.setProperty("max-width", "none", "important");
   document.body.style.setProperty("margin", "0", "important");
   document.body.style.setProperty("padding", "0", "important");
+  document.body.style.setProperty("background-color", "var(--bg)", "important");
+  document.body.style.setProperty("color", "var(--fg)", "important");
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
   cleanRendererArtifacts();
   wrapTables();
