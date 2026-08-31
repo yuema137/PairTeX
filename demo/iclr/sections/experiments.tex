@@ -1,0 +1,53 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Figures with Different Aspect Ratios}
+
+PairTeX should preserve the intrinsic aspect ratio of both portrait and wide
+figures. The two images below are intentionally simple generated assets.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.36\linewidth]{figures/tall.png}
+  \includegraphics[width=0.58\linewidth]{figures/wide.png}
+  \caption{Two synthetic figures with different aspect ratios.}
+  \label{fig:aspect-ratios}
+\end{figure}
+
+Figure~\ref{fig:aspect-ratios} is a visual regression target: the HTML view
+should scale the images to fit while preserving their original proportions.
+
+\subsection{Tables and Measurements}
+
+The wide table is intentionally wider than a comfortable reading column. The
+HTML view should keep the table readable and provide horizontal scrolling.
+\begin{table}[t]
+  \centering
+  \caption{A deliberately wide synthetic table.}
+  \label{tab:wide}
+  \begin{tabular}{lrrrrrrrr}
+    \toprule
+    Setting & Alpha & Beta & Gamma & Delta & Epsilon & Zeta & Eta & Theta \\
+    \midrule
+    Small & 0.91 & 0.82 & 0.77 & 0.88 & 0.73 & 0.69 & 0.84 & 0.79 \\
+    Medium & 0.94 & 0.86 & 0.81 & 0.90 & 0.78 & 0.75 & 0.87 & 0.83 \\
+    Large & 0.96 & 0.89 & 0.85 & 0.93 & 0.82 & 0.79 & 0.91 & 0.87 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Table~\ref{tab:wide} is synthetic. Its purpose is to exercise a table whose
+natural width exceeds the manuscript reading column, not to report a result.
+
+\begin{table}[t]
+  \centering
+  \caption{A compact comparison table.}
+  \label{tab:compact}
+  \begin{tabular}{lrr}
+    \toprule
+    Variant & Accuracy & Cost \\
+    \midrule
+    Baseline & 0.81 & 1.00 \\
+    Proposed & 0.87 & 1.08 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

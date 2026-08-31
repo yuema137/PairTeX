@@ -1,0 +1,23 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The browser interaction is intentionally separate from source mutation. A
+human may edit prose, propose a change, or attach a comment to the rendered
+manuscript. PairTeX records that intent with a version and source anchor; a
+user's coding agent decides how to consume it. The final source can then be
+committed and rendered again.
+
+\subsection{What This Fixture Tests}
+
+The fixture combines a conference style file, multiple source files, classic
+paper citations, different math delimiters, figures with unequal dimensions,
+and both narrow and wide tables. A successful render therefore demonstrates
+more than a single hand-written HTML page. It does not claim that every LaTeX
+macro or every conference template will work without renderer-specific
+configuration.
+
+\subsection{Limitations}
+
+The numerical values in Tables~\ref{tab:wide} and~\ref{tab:compact} are
+illustrative. The fixture is designed to test the PairTeX adapter and review
+interface, not to reproduce the experiments of the cited works.
