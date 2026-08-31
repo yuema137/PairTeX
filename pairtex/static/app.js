@@ -631,7 +631,20 @@ async function refreshView() {
     });
     const layoutOverride = document.createElement("style");
     layoutOverride.dataset.pairtex = "layout-override";
-    layoutOverride.textContent = "body { max-width: none !important; margin: 0 !important; padding: 0 !important; }";
+    layoutOverride.textContent = `
+      html, body {
+        background: var(--bg) !important;
+        color: var(--fg) !important;
+      }
+      #paper {
+        color: var(--fg) !important;
+      }
+      #paper :where(h1, h2, h3, h4, h5, h6, p, li, dd, dt, td, th, figcaption, caption, blockquote, div, span) {
+        color: inherit !important;
+      }
+      #paper a { color: var(--accent) !important; }
+      body { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    `;
     document.head.append(layoutOverride);
   }
   document.body.style.setProperty("max-width", "none", "important");
