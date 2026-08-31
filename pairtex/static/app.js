@@ -37,6 +37,14 @@ function wrapTables() {
   });
 }
 
+function cleanRendererArtifacts() {
+  document.querySelectorAll(".maketitle").forEach((title) => {
+    [...title.childNodes].forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE && /^\s*_+\s*$/.test(node.textContent || "")) node.remove();
+    });
+  });
+}
+
 function organizePaper() {
   const paper = $("#paper");
   const children = [...paper.children];
@@ -589,6 +597,7 @@ async function init() {
   document.body.style.setProperty("margin", "0", "important");
   document.body.style.setProperty("padding", "0", "important");
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
+  cleanRendererArtifacts();
   wrapTables();
   organizePaper();
   markFallbackEditableText();
