@@ -1,0 +1,123 @@
+"""Run a TeX-to-HTML renderer in a disposable project copy.
+
+The renderer is deliberately an adapter boundary. PairTeX never runs a
+renderer in the user's working tree and never publishes output that contains
+reported renderer errors or missing local assets.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from html.parser import HTMLParser
+from pathlib import Path
+
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+class AssetParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.sources: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        source = attributes.get("src")
+        if source and not source.startswith(("http://", "https://", "data:", "#")):
+            self.sources.append(source.split("?", 1)[0].split("#", 1)[0])
+
+
+def renderer_errors(output: str) -> list[str]:
+    output = ANSI_ESCAPE.sub("", output)
+    patterns = (
+        r"\[ERROR\].*",
+        r"\[FATAL\].*",
+        r"Compilation errors in the htlatex run",
+        r"Fatal error occurred",
+        r"Undefined control sequence",
+    )
+    return [line.strip() for line in output.splitlines() if any(re.search(pattern, line) for pattern in patterns)]
+
+
+def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | None) -> None:
+    input_path = input_path.resolve()
+    project = project.resolve()
+    if not project.is_dir():
+        raise ValueError(f"Project directory not found: {project}")
+    if not input_path.is_relative_to(project):
+        raise ValueError("Input manuscript must be inside the project directory")
+    if not input_path.is_file():
+        raise ValueError(f"Input manuscript not found: {input_path}")
+
+    output = output.resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="pairtex-render-") as temp_name:
+        disposable = Path(temp_name) / "project"
+        shutil.copytree(project, disposable, symlinks=True)
+        disposable_input = disposable / input_path.relative_to(project)
+        cwd = disposable_input.parent
+        environment = os.environ.copy()
+        if texinputs:
+            environment["TEXINPUTS"] = texinputs + environment.get("TEXINPUTS", "")
+
+        result = subprocess.run(
+            ["make4ht", disposable_input.name],
+            cwd=cwd,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        transcript = result.stdout + result.stderr
+        errors = renderer_errors(transcript)
+        html_path = cwd / f"{disposable_input.stem}.html"
+        if result.returncode != 0:
+            errors.append(f"renderer exited with status {result.returncode}")
+        if not html_path.is_file():
+            errors.append(f"renderer did not produce {html_path.name}")
+
+        if html_path.is_file():
+            parser = AssetParser()
+            parser.feed(html_path.read_text(encoding="utf-8", errors="replace"))
+            missing = sorted({source for source in parser.sources if not (html_path.parent / source).is_file()})
+            errors.extend(f"missing HTML asset: {source}" for source in missing)
+
+        if errors:
+            raise RuntimeError("Renderer output rejected:\n" + "\n".join(f"- {error}" for error in errors))
+
+        output.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(html_path, output / html_path.name)
+        for source in parser.sources:
+            source_path = html_path.parent / source
+            destination = output / source
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, destination)
+        css_files = sorted(cwd.glob("*.css"))
+        for css_path in css_files:
+            shutil.copy2(css_path, output / css_path.name)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Render a LaTeX project in a disposable copy")
+    parser.add_argument("--project", type=Path, required=True, help="Target LaTeX project")
+    parser.add_argument("--input", type=Path, required=True, help="Manuscript root relative to --project")
+    parser.add_argument("--output", type=Path, required=True, help="Directory receiving accepted HTML output")
+    parser.add_argument("--texinputs", help="Optional TEXINPUTS prefix required by the project renderer")
+    args = parser.parse_args()
+    try:
+        run_make4ht(args.project, args.project / args.input, args.output, args.texinputs)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    print(f"Accepted renderer output: {args.output.resolve()}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

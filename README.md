@@ -48,6 +48,24 @@ PairTeX writes only feedback and disposable render/build output. It does not
 apply feedback entries, edit source files, choose a coding agent, or define how
 users and agents consume the entries.
 
+## Renderer probe
+
+The renderer adapter runs in a disposable copy of the target project. It never
+writes renderer intermediates into the target working tree, and it rejects
+output when the renderer reports errors, when the HTML file is missing, or when
+an HTML asset referenced by the output is missing. For example:
+
+```sh
+python3 pairtex_render.py \
+  --project /path/to/paper \
+  --input arxiv/main.tex \
+  --output /tmp/pairtex-rendered \
+  --texinputs '../shared//:'
+```
+
+The target project's renderer-specific path settings are supplied explicitly;
+PairTeX does not edit the target project to make a renderer work.
+
 Feedback entries use an `open` / `resolved` lifecycle. Resolving keeps the
 entry for history and records the source commit that addressed it; deleting
 removes the entry artifact entirely. An optional generic coding-agent workflow
