@@ -51,6 +51,12 @@ python3 pairtex.py \\
 The template files are from the public ICLR Master-Template repository:
 <https://github.com/ICLR/Master-Template/tree/master/iclr2026>.
 
+The same synthetic manuscript is also available with the official NeurIPS
+2026 and ICML 2025 wrappers under `demo/neurips/` and `demo/icml/`. These
+fixtures intentionally share content and figures while varying the conference
+style, source wrapper, and layout conventions so renderer compatibility can be
+compared directly.
+
 ## Version boundary
 
 PairTeX uses Git commits as the strongest version identity for human-agent collaboration. Feedback entries record the current `HEAD` commit and whether the working tree was dirty when the entry was created.

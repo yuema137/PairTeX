@@ -1,0 +1,34 @@
+\section{Introduction}
+\label{sec:introduction}
+
+PairTeX presents an existing LaTeX manuscript as a readable HTML projection.
+The source remains canonical, while the browser provides a convenient place
+for human reading and feedback. This separation is useful when a coding agent
+needs to make source-level changes across several files \citep{goodfellow2016}.
+
+Classic machine-learning papers provide a useful public test vocabulary. The
+convolutional approach of \citet{lecun1998} established a practical pattern
+for learning local visual features, while residual connections later made
+very deep networks easier to optimize \citep{he2016}. These summaries are
+original fixture text rather than copied paper content.
+
+Inline mathematics such as $\alpha + \beta = \gamma$ should remain rendered
+in the browser. Display mathematics written with dollar delimiters should also
+be recognized:
+\[
+  f(x) = \int_{-\infty}^{\infty} e^{-t^2} \, dt.
+\]
+
+The same fixture deliberately uses the TeX shorthand display form:
+$$
+  \Pr(y \mid x) = \frac{\exp(x^\top w_y)}{\sum_{k=1}^{K}\exp(x^\top w_k)}.
+$$
+
+\section{Background}
+\label{sec:background}
+
+The Transformer paper replaced recurrence with attention-based sequence
+processing \citep{vaswani2017}. Adam introduced adaptive estimates of first
+and second moments for stochastic optimization \citep{kingma2014}. The
+fixture uses these well-known references only to make citation rendering and
+source anchoring resemble a normal research manuscript.

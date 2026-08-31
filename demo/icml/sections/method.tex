@@ -1,0 +1,32 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{A Small Model}
+
+We use a deliberately simple three-stage computation. Let $x \in
+\mathbb{R}^{d}$ be an input vector and let $W$ be a learned projection. An
+aligned environment is a useful stress case because it contains several
+visual rows but should remain one coherent editable formula:
+\begin{align}
+  z &= Wx + b, \\
+  \hat{y} &= \operatorname{softmax}(z), \\
+  \mathcal{L} &= -\sum_{k=1}^{K} y_k \log \hat{y}_k.
+\end{align}
+
+The following equation has a label and a reference, which lets the browser be
+tested with both rendered mathematics and cross-references:
+\begin{equation}
+  \operatorname{score}(x) = \frac{1}{K}\sum_{k=1}^{K}\hat{y}_k.
+  \label{eq:score}
+\end{equation}
+
+Equation~\ref{eq:score} is not intended as a scientific claim. It is a stable
+anchor for testing how a rendered block behaves when a human selects nearby
+prose or opens the formula editor.
+
+\subsection{Implementation Notes}
+
+This fixture intentionally uses a multi-file source layout. The renderer must
+follow the existing \texttt{\\input} graph while retaining each included file
+as the source-location hint. PairTeX does not rewrite the graph or introduce a
+second document format.

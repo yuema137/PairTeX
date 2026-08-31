@@ -1,0 +1,32 @@
+\documentclass{article}
+\usepackage{neurips_2026}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+
+\title{A Small PairTeX Compatibility Study}
+\author{Anonymous PairTeX Authors}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This public fixture uses the same synthetic manuscript as the ICLR and ICML
+fixtures while preserving the NeurIPS 2026 source and layout conventions. It
+exercises prose, citations, formulas, figures, tables, sections, subsections,
+and an appendix for renderer compatibility testing.
+\end{abstract}
+\input{sections/introduction}
+\input{sections/method}
+\input{sections/experiments}
+\input{sections/results}
+\input{sections/discussion}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\appendix
+\input{sections/appendix}
+\end{document}
