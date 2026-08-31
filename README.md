@@ -88,8 +88,11 @@ python3 pairtex.py \
   --port 8765
 ```
 
-Open <http://127.0.0.1:8765/>. PairTeX writes feedback to independent files
-under `/path/to/paper/.pairtex/feedback/` and does not modify the manuscript.
+Open the URL printed by PairTeX (normally
+<http://127.0.0.1:8765/>). If that port is occupied, PairTeX automatically
+uses the next available localhost port. PairTeX writes feedback to independent
+files under `/path/to/paper/.pairtex/feedback/` and does not modify the
+manuscript.
 
 Each user may run PairTeX with their own temporary HTML projection. PairTeX
 does not synchronize those projections.

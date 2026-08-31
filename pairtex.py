@@ -23,6 +23,27 @@ from pairtex_validation import validate_rendered_html
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "pairtex" / "static"
+DEFAULT_PORT = 8765
+PORT_SCAN_LIMIT = 100
+
+
+def create_server(host: str, preferred_port: int, handler):
+    """Bind the preferred port, falling forward when another process owns it."""
+    if preferred_port == 0:
+        return ThreadingHTTPServer((host, 0), handler)
+    if not 1 <= preferred_port <= 65535:
+        raise ValueError("port must be 0 or between 1 and 65535")
+
+    last_error = None
+    for port in range(preferred_port, min(preferred_port + PORT_SCAN_LIMIT, 65536)):
+        try:
+            return ThreadingHTTPServer((host, port), handler)
+        except OSError as error:
+            last_error = error
+    raise OSError(
+        f"could not bind a port from {preferred_port} through "
+        f"{min(preferred_port + PORT_SCAN_LIMIT - 1, 65535)}"
+    ) from last_error
 
 
 def git_value(project: Path, *args: str, fallback: str = "") -> str:
@@ -205,7 +226,12 @@ def main() -> int:
     parser.add_argument("--project", type=Path, required=True, help="Target LaTeX repository")
     parser.add_argument("--html", type=Path, required=True, help="Rendered HTML fragment")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_PORT,
+        help="Preferred localhost port; occupied ports fall forward automatically",
+    )
     args = parser.parse_args()
 
     project = args.project.resolve()
@@ -217,8 +243,11 @@ def main() -> int:
 
     app = App(project, html_path)
     handler = type("PairTeXHandler", (Handler,), {"app": app})
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"PairTeX running at http://{args.host}:{args.port}/", flush=True)
+    try:
+        server = create_server(args.host, args.port, handler)
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    print(f"PairTeX running at http://{args.host}:{server.server_port}/", flush=True)
     print(f"Project: {project}", flush=True)
     try:
         server.serve_forever()
