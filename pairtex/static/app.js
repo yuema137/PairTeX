@@ -49,6 +49,15 @@ function initThemeControls() {
     if (tokens) Object.entries(tokens).forEach(([name, value]) => {
       root.style.setProperty(`--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`, value);
     });
+    if (tokens) {
+      document.body.style.setProperty("background-color", tokens.bg, "important");
+      document.body.style.setProperty("color", tokens.fg, "important");
+      const paper = $("#paper");
+      if (paper) {
+        paper.style.setProperty("background-color", tokens.bg, "important");
+        paper.style.setProperty("color", tokens.fg, "important");
+      }
+    }
     localStorage.setItem("pairtex-color-mode", modeSelect.value);
     localStorage.setItem("pairtex-palette", paletteSelect.value);
   };
