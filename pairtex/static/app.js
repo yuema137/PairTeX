@@ -58,6 +58,7 @@ function organizePaper() {
         panel = document.createElement("div");
         panel.className = "paper-panel";
         panel.dataset.panel = panelId(name);
+        panel.dataset.sectionName = name;
         panel.append(node);
         sectionPanels.push({ name, panel });
       } else if (node.matches(".tableofcontents")) {
@@ -82,6 +83,7 @@ function organizePaper() {
     const panel = document.createElement("div");
     panel.className = "paper-panel";
     panel.dataset.panel = panelId(name);
+    panel.dataset.sectionName = name;
     panel.append(node);
     sectionPanels.push({ name, panel });
   });
@@ -102,6 +104,18 @@ function organizePaper() {
       item.setAttribute("aria-selected", String(active));
     });
     document.querySelectorAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
+  });
+}
+
+function markFallbackEditableText() {
+  document.querySelectorAll("#paper p").forEach((block) => {
+    if (block.dataset.editable || block.closest(".thebibliography, figure, figcaption, .tableofcontents")) return;
+    if (block.querySelector("img, table, math, svg")) return;
+    const text = block.innerText.trim();
+    if (!text) return;
+    block.dataset.editable = "text";
+    block.dataset.sourceText = text;
+    block.dataset.section = block.dataset.section || block.closest(".paper-panel")?.dataset.sectionName || "";
   });
 }
 
@@ -126,9 +140,12 @@ function sortEntries(entries) {
 function renderedOffset(entry) {
   const storedOffset = entry.anchor?.rendered_offset;
   if (Number.isFinite(storedOffset) && storedOffset >= 0) return storedOffset;
-  const target = [...document.querySelectorAll("[data-source-file]")].find((node) => {
+  const target = [...document.querySelectorAll("[data-source-file], [data-editable=\"text\"]")].find((node) => {
     const section = (node.dataset.section || "").split("/").filter(Boolean);
-    return node.dataset.sourceFile === entry.anchor?.file_hint
+    const fileMatches = entry.anchor?.file_hint
+      ? node.dataset.sourceFile === entry.anchor.file_hint
+      : !node.dataset.sourceFile;
+    return fileMatches
       && section.join("/") === (entry.anchor?.section || []).join("/");
   });
   if (!target) return Number.MAX_SAFE_INTEGER;
@@ -141,13 +158,13 @@ function renderedOffset(entry) {
 function selectedAnchor() {
   const selection = window.getSelection();
   if (!selection || selection.isCollapsed || !selection.toString().trim()) return null;
-  const node = selection.anchorNode?.parentElement?.closest("[data-source-file]");
+  const node = selection.anchorNode?.parentElement?.closest("[data-source-file], [data-editable=\"text\"]");
   if (!node) return null;
   const text = selection.toString().trim();
   const blockText = node.textContent.trim();
   const index = blockText.indexOf(text);
   return {
-    file_hint: node.dataset.sourceFile,
+    file_hint: node.dataset.sourceFile || null,
     line_start_hint: Number(node.dataset.sourceLine || 0) || null,
     line_end_hint: Number(node.dataset.sourceLineEnd || node.dataset.sourceLine || 0) || null,
     section: (node.dataset.section || "").split("/").filter(Boolean),
@@ -202,16 +219,19 @@ function renderEntries(entries) {
 function decoratePaper(entries) {
   const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
   state.targetByEntryId.clear();
-  document.querySelectorAll("[data-source-file]").forEach((node) => {
+  document.querySelectorAll("[data-source-file], [data-editable=\"text\"]").forEach((node) => {
     node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
     node.removeAttribute("data-feedback-number");
   });
   let changeNumber = 0;
   orderedEntries.forEach((entry) => {
-    const target = [...document.querySelectorAll("[data-source-file]")].find((node) => {
+    const target = [...document.querySelectorAll("[data-source-file], [data-editable=\"text\"]")].find((node) => {
       const section = (node.dataset.section || "").split("/").filter(Boolean);
-      return node.dataset.sourceFile === entry.anchor?.file_hint
+      const fileMatches = entry.anchor?.file_hint
+        ? node.dataset.sourceFile === entry.anchor.file_hint
+        : !node.dataset.sourceFile;
+      return fileMatches
         && section.join("/") === (entry.anchor?.section || []).join("/");
     });
     if (target) {
@@ -571,6 +591,7 @@ async function init() {
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
   wrapTables();
   organizePaper();
+  markFallbackEditableText();
   captureEditBaselines();
   if (window.MathJax?.startup?.promise) {
     window.MathJax.startup.promise.then(() => typesetMath($("#paper"))).catch(() => {});
