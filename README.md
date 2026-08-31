@@ -86,6 +86,23 @@ The web view provides `System`, `Light`, and `Dark` color modes, plus the
 only in the local browser and do not affect the manuscript, renderer output,
 feedback entries, or source repository.
 
+Palettes use a small replaceable schema with `label`, `light`, and `dark`
+tokens. A local project may add `.pairtex/theme.js` defining
+`window.PairTeXCustomPalettes` with the same shape:
+
+```js
+window.PairTeXCustomPalettes = {
+  graphite: {
+    label: "Graphite",
+    light: { accent: "#4b5563", accentSoft: "rgba(75,85,99,.13)", ambient: "rgba(148,163,184,.18)", ambientSoft: "rgba(203,213,225,.20)" },
+    dark: { accent: "#cbd5e1", accentSoft: "rgba(203,213,225,.16)", ambient: "rgba(71,85,105,.20)", ambientSoft: "rgba(51,65,85,.16)" }
+  }
+};
+```
+
+This optional file is loaded by the localhost server as a UI customization;
+it is not interpreted as manuscript input and is never written by PairTeX.
+
 ## Renderer probe
 
 The renderer adapter runs in a disposable copy of the target project. It never

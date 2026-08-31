@@ -119,7 +119,12 @@ class Handler(BaseHTTPRequestHandler):
             body = json.dumps(self.app.state(), ensure_ascii=False).encode("utf-8")
             self.send_bytes(body, "application/json; charset=utf-8")
             return
-        if path in {"/app.js", "/style.css"}:
+        if path == "/theme.js":
+            project_theme = self.app.project / ".pairtex" / "theme.js"
+            body = project_theme.read_bytes() if project_theme.is_file() else b"window.PairTeXCustomPalettes = {};\n"
+            self.send_bytes(body, "application/javascript; charset=utf-8")
+            return
+        if path in {"/app.js", "/style.css", "/themes.js"}:
             file_path = STATIC_DIR / path.lstrip("/")
             content_type = mimetypes.guess_type(file_path.name)[0] or "text/plain"
             self.send_bytes(file_path.read_bytes(), f"{content_type}; charset=utf-8")

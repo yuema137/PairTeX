@@ -19,19 +19,35 @@ function initThemeControls() {
   const root = document.documentElement;
   const modeSelect = $("#theme-mode");
   const paletteSelect = $("#theme-palette");
+  const palettes = window.PairTeXPalettes || {};
+  Object.entries(palettes).forEach(([id, palette]) => {
+    if (paletteSelect.querySelector(`option[value="${CSS.escape(id)}"]`)) return;
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = palette.label || id;
+    paletteSelect.append(option);
+  });
   const mode = localStorage.getItem("pairtex-color-mode") || "system";
-  const palette = localStorage.getItem("pairtex-palette") || "ocean";
-  modeSelect.value = mode;
-  paletteSelect.value = palette;
+  const palette = localStorage.getItem("pairtex-palette") || Object.keys(palettes)[0] || "ocean";
+  modeSelect.value = ["system", "light", "dark"].includes(mode) ? mode : "system";
+  paletteSelect.value = palettes[palette] ? palette : Object.keys(palettes)[0];
   const apply = () => {
+    const effectiveMode = modeSelect.value === "system"
+      ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : modeSelect.value;
     if (modeSelect.value === "system") delete root.dataset.colorMode;
-    else root.dataset.colorMode = modeSelect.value;
+    else root.dataset.colorMode = effectiveMode;
     root.dataset.palette = paletteSelect.value;
+    const tokens = palettes[paletteSelect.value]?.[effectiveMode];
+    if (tokens) Object.entries(tokens).forEach(([name, value]) => {
+      root.style.setProperty(`--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`, value);
+    });
     localStorage.setItem("pairtex-color-mode", modeSelect.value);
     localStorage.setItem("pairtex-palette", paletteSelect.value);
   };
   modeSelect.addEventListener("change", apply);
   paletteSelect.addEventListener("change", apply);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
   apply();
 }
 
