@@ -16,22 +16,34 @@ LaTeX project, start a local view, and unplug it at any time. No project
 restructuring, source migration, new editor, or replacement build workflow is
 required.
 
-## Where PairTeX fits
+<p align="center">
+  <img src="docs/assets/pairtex-loop.svg" alt="PairTeX loop: a disposable human HTML view connects structured feedback to an unchanged canonical LaTeX repository" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/assets/pairtex-demo.png" alt="PairTeX demo showing a readable paper, Edit and Review modes, and feedback cards with Locate, Reply, Edit, and Delete actions" width="100%">
+</p>
+
+The workflow is simple: humans read and review the HTML projection, PairTeX
+records portable feedback artifacts, and the user's coding agent decides how
+to consume them and change the canonical TeX repository.
+
+## Why PairTeX
 
 [Prism](https://openai.com/prism/) and [Overleaf](https://www.overleaf.com/)
-are complete online writing workspaces. PairTeX is deliberately a different
-layer: a tiny local adapter and feedback protocol for projects that already
-have a LaTeX repository, build workflow, Git history, and coding agent.
+are complete online writing workspaces. PairTeX is a tiny local adapter for
+projects that already have a LaTeX repository, build workflow, Git history,
+and coding agent.
 
 | | Prism | Overleaf | PairTeX |
 | --- | --- | --- | --- |
-| Product shape | Cloud AI-native writing workspace | Online collaborative LaTeX workspace | Lightweight local plug-in layer |
-| Canonical work | Prism project | Overleaf project | Existing Git + LaTeX repository |
-| Human interface | Integrated editor and AI assistant | Editor, comments, and track changes | Disposable interactive HTML projection |
-| Agent interface | Built-in AI inside the workspace | Workspace and optional Git integrations | Any coding agent consumes portable feedback artifacts |
-| Git relationship | Git integration is currently unavailable | Git/GitHub integrations are available for eligible plans | Git-native by design |
-| Source boundary | Workspace manages project edits | Workspace manages project edits | PairTeX is read-only; `.tex` / `.bib` remain canonical |
-| AI dependency | Built-in AI | Not required for core editing | No LLM or model API required |
+| Type | Cloud AI workspace | Online LaTeX editor | Local plug-in |
+| Source | Prism project | Overleaf project | Existing repo |
+| Human UI | Editor + AI | Editor + comments | HTML review |
+| Agent | Built-in AI | External / Git | Any agent |
+| Git | Not yet | Premium sync | Native |
+| Source safety | Platform edits | Platform edits | Read-only |
+| AI required | Yes | No | No |
 
 ### Use PairTeX when
 
@@ -44,9 +56,8 @@ have a LaTeX repository, build workflow, Git history, and coding agent.
 * PairTeX must be removable without changing the manuscript project.
 
 PairTeX is not a replacement for Prism, Overleaf, or a coding agent. Its
-advantage is composability: it adds the missing human-facing review layer and
-agent handoff while leaving the user's source, tools, and ownership model
-alone.
+advantage is composability: it adds a human-facing review layer and agent
+handoff while leaving the user's source, tools, and ownership model alone.
 
 Prism currently supports importing LaTeX projects, but its [official help
 documentation](https://help.openai.com/en/articles/20001050-troubleshooting-and-getting-help-in-prism)
@@ -54,25 +65,17 @@ says that Git integration is not yet available. Overleaf documents Git and
 GitHub synchronization as integrations for eligible plans; PairTeX is Git-native
 without moving the project into a separate workspace.
 
-<p align="center">
-  <img src="docs/assets/pairtex-loop.svg" alt="PairTeX loop: a disposable human HTML view connects structured feedback to an unchanged canonical LaTeX repository" width="100%">
-</p>
-
 PairTeX gives humans a comfortable manuscript surface while coding agents keep
 working in the repository they already understand. The HTML layer and feedback
 files are disposable/plugin-owned artifacts; the original TeX project stays
 clean and read-only from PairTeX's perspective.
 
-The demo below shows the complete human-facing surface. Humans work in the
+The demo screenshot above shows the complete human-facing surface. Humans work in the
 HTML artifact; PairTeX records their actions as independent feedback artifacts
 under `.pairtex/feedback/`. Comments remain comments, while Edit and Review
 produce structured change entries. Each card can be located in the manuscript,
 replied to, edited, or deleted. The coding agent decides how to consume the
 entries and whether to resolve them after changing the canonical TeX.
-
-<p align="center">
-  <img src="docs/assets/pairtex-demo.png" alt="PairTeX demo showing a readable paper, Edit and Review modes, and feedback cards with Locate, Reply, Edit, and Delete actions" width="100%">
-</p>
 
 ## Quick start
 
