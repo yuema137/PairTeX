@@ -67,24 +67,52 @@ conference styles without using SIDERIUS content.
 
 ## Human-agent workflow
 
+One canonical TeX source commit is one collaboration turn. The complete loop is:
+
+### 1. Ask the agent to start PairTeX
+
+Send this prompt from the LaTeX repository:
+
 ```text
-render current source
-    -> human adds feedback in HTML
-    -> coding agent reads .pairtex/feedback/
-    -> agent edits canonical source
-    -> agent rebuilds source and HTML
-    -> agent resolves addressed entries or replies in their thread
-    -> human clicks Refresh
+Read and follow skills/pairtex-agent/SKILL.md. Use PairTeX to render this existing LaTeX repository into a disposable local HTML projection. Discover the manuscript entry point and use the repository's existing build workflow. Do not modify any canonical source files. Start the PairTeX localhost view and report the URL, source HEAD commit, dirty state, render command, and HTML output path.
 ```
 
-One canonical source commit is one collaboration turn. Git handles committed
-source and feedback artifacts; PairTeX does not handle concurrent editing,
-locking, merging, or version-conflict resolution.
+If the agent does not already have this skill available, provide it from this
+repository or install it in that agent's skill directory before sending the
+prompt.
 
-For coding-agent integration, use the optional protocol in
-[`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md). It explains the
-feedback schema, anchors, Comment/Edit/Review semantics, discussion threads,
-resolution rules, and copy-paste prompts.
+The agent should only build/render and start the local view. Open the reported
+URL and use the HTML interface to add comments, Edit-mode changes, or
+Review-mode proposals. PairTeX writes them to `.pairtex/feedback/`.
+
+### 2. Ask the agent to consume the feedback
+
+After finishing your feedback, send:
+
+```text
+Read and follow skills/pairtex-agent/SKILL.md. Consume the open PairTeX feedback in .pairtex/feedback/. For each entry, use its commit and redundant source anchors to inspect the current repository, apply appropriate changes only to canonical source, and preserve existing project conventions. Build the paper and regenerate the PairTeX HTML projection. Resolve only feedback that is actually addressed; for anything ambiguous or intentionally deferred, leave it open and append a concise thread reply. Report the source diff, build result, render path, and feedback decisions.
+```
+
+The agent may modify only the canonical source as part of this step. It should
+not resolve feedback speculatively. A comment can result in a source edit, a
+question in the thread, or an explained decision not to edit. An Edit-mode
+change is already accepted as human intent; a Review-mode change remains a
+proposal until the agent decides how to handle it.
+
+### 3. Refresh the browser
+
+When the agent reports that it has regenerated the HTML, click `Refresh` in the
+PairTeX page. The page rereads the latest HTML and feedback files. It does not
+compile TeX or modify source.
+
+The agent should commit the canonical source change at the end of the turn,
+then record that source commit in the resolution metadata. Feedback metadata
+may be committed separately for Git exchange. If an item is not addressed, it
+stays open and receives a thread reply.
+
+For the full schema, anchor rules, lifecycle semantics, thread format, and
+agent boundaries, read
+[`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md).
 
 ## Renderer adapters
 
