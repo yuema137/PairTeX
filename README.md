@@ -27,6 +27,30 @@ Open `http://127.0.0.1:8765/` to read the rendered manuscript, select text,
 and create comments or change intents. Entries are written as independent
 JSON files under `demo/fixture/.pairtex/feedback/`.
 
+## Public ICLR Fixture
+
+The repository also includes a larger public fixture based on the official
+ICLR 2026 Master-Template. Its content is synthetic and is intended to test
+renderer compatibility with formulas, citations, figures, tables, sections,
+and subsections without depending on or exposing the SIDERIUS paper:
+
+```sh
+rm -rf /tmp/pairtex-iclr-rendered
+python3 pairtex_render.py \\
+  --project demo/iclr \\
+  --input main.tex \\
+  --output /tmp/pairtex-iclr-rendered \\
+  --build-command 'latexmk -pdf -interaction=nonstopmode -halt-on-error {input}'
+
+python3 pairtex.py \\
+  --project demo/iclr \\
+  --html /tmp/pairtex-iclr-rendered/main.html \\
+  --port 8766
+```
+
+The template files are from the public ICLR Master-Template repository:
+<https://github.com/ICLR/Master-Template/tree/master/iclr2026>.
+
 ## Version boundary
 
 PairTeX uses Git commits as the strongest version identity for human-agent collaboration. Feedback entries record the current `HEAD` commit and whether the working tree was dirty when the entry was created.

@@ -78,6 +78,17 @@ def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -
         )
 
 
+def materialize_project_assets(project: Path, html_path: Path, sources: list[str]) -> None:
+    """Copy source assets referenced by the renderer into the disposable output."""
+    for source in missing_assets(html_path, sources):
+        candidate = project / source
+        if not candidate.is_file():
+            continue
+        destination = html_path.parent / source
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate, destination)
+
+
 def strip_tex_comment(line: str) -> str:
     escaped = False
     for index, char in enumerate(line):
@@ -269,6 +280,7 @@ def run_make4ht(
             annotate_math_sources(disposable, disposable_input, html_path, search_roots)
             parser = AssetParser()
             parser.feed(html_path.read_text(encoding="utf-8", errors="replace"))
+            materialize_project_assets(disposable, html_path, parser.sources)
             materialize_pdf_assets(disposable, html_path, parser.sources)
             missing = missing_assets(html_path, parser.sources)
             errors.extend(f"missing HTML asset: {source}" for source in missing)

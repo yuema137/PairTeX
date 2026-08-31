@@ -1,0 +1,108 @@
+\documentclass{article}
+
+\usepackage{iclr2026_conference}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+\input{math_commands}
+
+\title{A Small PairTeX Compatibility Study}
+\author{PairTeX Demo Authors\\
+PairTeX\\
+\texttt{pairtex@example.com}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This public fixture exercises the basic manuscript structures that PairTeX
+must render for an existing LaTeX project: prose, citations, formulas,
+figures, tables, sections, and subsections. The content is synthetic and
+exists only for local interaction testing.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+PairTeX presents an existing LaTeX manuscript as a readable HTML projection.
+The source remains canonical, while the browser provides a convenient place
+for human reading and feedback. This separation is useful when a coding agent
+needs to make source-level changes across several files \citep{goodfellow2016}.
+
+Inline mathematics such as $\alpha + \beta = \gamma$ should remain rendered
+in the browser. Display mathematics written with dollar delimiters should also
+be recognized:
+\[
+  f(x) = \int_{-\infty}^{\infty} e^{-t^2} \, dt.
+\]
+
+The same fixture deliberately uses the TeX shorthand display form:
+$$
+  \Pr(y \mid x) = \frac{\exp(x^\top w_y)}{\sum_{k=1}^{K}\exp(x^\top w_k)}.
+$$
+
+\section{A Few Structures}
+\label{sec:structures}
+
+\subsection{Aligned Equations}
+
+An aligned environment is a useful stress case because it contains several
+visual rows but should remain one coherent editable formula:
+\begin{align}
+  z &= Wx + b, \\
+  \hat{y} &= \operatorname{softmax}(z), \\
+  \mathcal{L} &= -\sum_{k=1}^{K} y_k \log \hat{y}_k.
+\end{align}
+
+\subsection{Figures}
+
+PairTeX should preserve the intrinsic aspect ratio of both portrait and wide
+figures. The two images below are intentionally simple generated assets.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.42\linewidth]{figures/tall.png}
+  \includegraphics[width=0.54\linewidth]{figures/wide.png}
+  \caption{Two synthetic figures with different aspect ratios.}
+  \label{fig:aspect-ratios}
+\end{figure}
+
+\subsection{Tables}
+
+The wide table is intentionally wider than a comfortable reading column. The
+HTML view should keep the table readable and provide horizontal scrolling.
+\begin{table}[t]
+  \centering
+  \caption{A deliberately wide synthetic table.}
+  \label{tab:wide}
+  \begin{tabular}{lrrrrrrrr}
+    \toprule
+    Setting & Alpha & Beta & Gamma & Delta & Epsilon & Zeta & Eta & Theta \\
+    \midrule
+    Small & 0.91 & 0.82 & 0.77 & 0.88 & 0.73 & 0.69 & 0.84 & 0.79 \\
+    Medium & 0.94 & 0.86 & 0.81 & 0.90 & 0.78 & 0.75 & 0.87 & 0.83 \\
+    Large & 0.96 & 0.89 & 0.85 & 0.93 & 0.82 & 0.79 & 0.91 & 0.87 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Review Loop}
+\label{sec:review}
+
+The browser interaction is intentionally separate from source mutation. A
+human may edit prose, propose a change, or attach a comment to the rendered
+manuscript. PairTeX records that intent with a version and source anchor; a
+user's coding agent decides how to consume it. The final source can then be
+committed and rendered again.
+
+\section{Conclusion}
+
+This fixture is not a second document format or a replacement for the ICLR
+template. It is a small public compatibility target for PairTeX's renderer
+adapter and human-facing review surface.
+
+\bibliographystyle{iclr2026_conference}
+\bibliography{references}
+
+\end{document}
