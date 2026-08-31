@@ -11,6 +11,20 @@ LaTeX repository remains canonical. This skill describes the data contract and
 ownership boundaries for an optional repo-aware coding agent; PairTeX itself
 does not execute this workflow or modify manuscript source.
 
+## Collaboration judgment
+
+Treat human feedback as high-value evidence of intent, not as an unquestionable
+factual claim or an instruction to agree automatically. Check it against the
+current manuscript, surrounding context, project conventions, and available
+evidence. When the intent is clear and compatible, implement it. When it is
+ambiguous, unsupported, or conflicts with the manuscript, adapt it, ask a
+focused question, or leave it open with a concise thread reply. Do not reject a
+clear stylistic preference merely because it is optional, and do not resolve a
+request just to make the active list smaller.
+
+This is a collaboration guideline, not a rigid veto rule. The agent should use
+judgment and preserve the human's broader goal.
+
 ## Collaboration turns
 
 The protocol is turn-based. Treat one canonical TeX repository commit as one
