@@ -25,6 +25,17 @@ working in the repository they already understand. The HTML layer and feedback
 files are disposable/plugin-owned artifacts; the original TeX project stays
 clean and read-only from PairTeX's perspective.
 
+The demo below shows the complete human-facing surface. Humans work in the
+HTML artifact; PairTeX records their actions as independent feedback artifacts
+under `.pairtex/feedback/`. Comments remain comments, while Edit and Review
+produce structured change entries. Each card can be located in the manuscript,
+replied to, edited, or deleted. The coding agent decides how to consume the
+entries and whether to resolve them after changing the canonical TeX.
+
+<p align="center">
+  <img src="docs/assets/pairtex-demo.png" alt="PairTeX demo showing a readable paper, Edit and Review modes, and feedback cards with Locate, Reply, Edit, and Delete actions" width="100%">
+</p>
+
 ## Quick start
 
 Point PairTeX at an existing project and an already rendered HTML file:
