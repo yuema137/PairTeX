@@ -23,6 +23,56 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function panelId(name) {
+  return `section-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "document"}`;
+}
+
+function organizePaper() {
+  const paper = $("#paper");
+  const topLevelSections = [...paper.children].filter((node) => node.matches("section[data-section]"));
+  if (!topLevelSections.length) return;
+
+  const home = document.createElement("div");
+  home.className = "paper-panel is-active";
+  home.dataset.panel = "home";
+  const sectionPanels = [];
+
+  [...paper.children].forEach((node) => {
+    if (!node.matches("section[data-section]")) {
+      home.append(node);
+      return;
+    }
+    const name = node.dataset.section.trim();
+    if (name.toLowerCase() === "abstract") {
+      home.append(node);
+      return;
+    }
+    const panel = document.createElement("div");
+    panel.className = "paper-panel";
+    panel.dataset.panel = panelId(name);
+    panel.append(node);
+    sectionPanels.push({ name, panel });
+  });
+
+  paper.replaceChildren(home, ...sectionPanels.map(({ panel }) => panel));
+  const tabs = $("#paper-tabs");
+  tabs.innerHTML = [
+    { label: "Home", panel: "home" },
+    ...sectionPanels.map(({ name, panel }) => ({ label: name, panel: panel.dataset.panel })),
+  ].map(({ label, panel }, index) => `<button class="paper-tab${index === 0 ? " is-active" : ""}" data-panel-target="${escapeHtml(panel)}" role="tab" aria-selected="${index === 0}">${escapeHtml(label)}</button>`).join("");
+  tabs.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-panel-target]");
+    if (!tab) return;
+    const target = tab.dataset.panelTarget;
+    document.querySelectorAll(".paper-tab").forEach((item) => {
+      const active = item === tab;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
+  });
+}
+
 function sortEntries(entries) {
   return [...entries].sort((left, right) => {
     const leftAnchor = left.anchor || {};
@@ -468,6 +518,7 @@ async function saveEntry(event) {
 async function init() {
   state.project = await (await fetch("/api/state")).json();
   $("#paper").innerHTML = state.project.manuscript_html;
+  organizePaper();
   captureEditBaselines();
   if (window.MathJax?.startup?.promise) {
     window.MathJax.startup.promise.then(() => typesetMath($("#paper"))).catch(() => {});

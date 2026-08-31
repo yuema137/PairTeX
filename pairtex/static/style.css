@@ -34,7 +34,13 @@ button { cursor: pointer; }
 .mode-hint { color: var(--muted); font-size: 12px; }
 .status { margin-left: auto; color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
 .layout { max-width: 1240px; margin: 0 auto; padding: 38px 28px 70px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; }
+.paper-shell { min-width: 0; }
+.paper-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.paper-tab { border: 0; border-radius: 999px; padding: 7px 14px; color: var(--muted); background: transparent; font-size: 13px; }
+.paper-tab:hover, .paper-tab.is-active { color: var(--fg); background: var(--blue-soft); }
 .paper { max-width: 760px; min-width: 0; }
+.paper-panel { display: none; }
+.paper-panel.is-active { display: block; }
 .paper.is-editing { padding: 20px 18px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,.18); }
 .paper.is-editing [data-source-file] { outline: 1px dashed transparent; outline-offset: 7px; }
 .paper.is-editing [data-source-file]:hover, .paper.is-editing [data-source-file]:focus-within { outline-color: var(--border-hi); }
