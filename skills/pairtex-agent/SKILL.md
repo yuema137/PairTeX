@@ -11,6 +11,28 @@ LaTeX repository remains canonical. This skill describes the data contract and
 ownership boundaries for an optional repo-aware coding agent; PairTeX itself
 does not execute this workflow or modify manuscript source.
 
+## Collaboration turns
+
+The protocol is turn-based. Treat one canonical TeX repository commit as one
+human-agent collaboration turn:
+
+```text
+source commit -> local HTML projection -> human feedback
+              -> source edits -> next source commit
+              -> rebuilt HTML -> feedback resolution
+```
+
+Different users may have different temporary HTML projections in local
+checkouts. PairTeX does not synchronize browser sessions, lock files, merge
+uncommitted work, or resolve concurrent version conflicts. Git and the user's
+normal repository workflow remain responsible for exchanging committed source
+and feedback artifacts.
+
+The commit boundary is the stable coordination primitive for future multi-user
+extensions. A dirty worktree may still be viewed and may produce valid
+feedback, but the feedback records its `head_commit` and `worktree_dirty` state
+so the next source-side turn can reconcile it.
+
 ## Workflow
 
 1. Read entries with `status: "open"` from `.pairtex/feedback/`. Treat old

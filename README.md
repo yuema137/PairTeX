@@ -64,6 +64,32 @@ PairTeX uses Git commits as the strongest version identity for human-agent colla
 
 Clean commits are required for formal pilot evidence, but normal PairTeX use may start from a dirty working tree. Dirty feedback is marked as originating from an uncommitted state and relies more heavily on source and context anchors. PairTeX does not snapshot dirty worktrees, replay uncommitted patches, or merge source changes automatically.
 
+## Commit-turn collaboration model
+
+PairTeX treats one canonical TeX repository commit as one human-agent
+collaboration turn:
+
+```text
+source commit
+    -> one local HTML projection
+    -> human feedback
+    -> agent source edits
+    -> next source commit
+    -> rebuilt HTML projection
+    -> feedback resolution
+```
+
+Different local users may generate different temporary HTML files from their
+own checkout. These are independent projections, not synchronized manuscript
+copies. PairTeX does not attempt to coordinate simultaneous browser sessions,
+lock source files, merge feedback in real time, or resolve version conflicts.
+Those concerns are intentionally outside the current collaboration model.
+
+Future multi-user features must preserve commit-boundary turns as the primary
+coordination primitive. Git remains responsible for exchanging committed source
+and feedback artifacts; PairTeX remains responsible for presenting the local
+projection and capturing human intent.
+
 ## Integration contract
 
 The target project provides its manuscript configuration and existing build
