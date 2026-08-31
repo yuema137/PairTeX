@@ -31,7 +31,7 @@ function initThemeControls() {
     paletteSelect.append(option);
   });
   const mode = localStorage.getItem("pairtex-color-mode") || "system";
-  const palette = localStorage.getItem("pairtex-palette") || Object.keys(palettes)[0] || "ocean";
+  const palette = localStorage.getItem("pairtex-palette-v2") || Object.keys(palettes)[0] || "ocean";
   modeSelect.value = ["system", "light", "dark"].includes(mode) ? mode : "system";
   paletteSelect.value = palettes[palette] ? palette : Object.keys(palettes)[0];
   const apply = () => {
@@ -69,7 +69,7 @@ function initThemeControls() {
       }
     }
     localStorage.setItem("pairtex-color-mode", modeSelect.value);
-    localStorage.setItem("pairtex-palette", paletteSelect.value);
+    localStorage.setItem("pairtex-palette-v2", paletteSelect.value);
   };
   modeSelect.addEventListener("change", apply);
   paletteSelect.addEventListener("change", apply);
