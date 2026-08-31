@@ -11,6 +11,15 @@ single source of truth, while HTML is disposable.
 PairTeX is deterministic and does not require an LLM, model API, or agent
 runtime.
 
+<p align="center">
+  <img src="docs/assets/pairtex-loop.svg" alt="PairTeX loop: a disposable human HTML view connects structured feedback to an unchanged canonical LaTeX repository" width="100%">
+</p>
+
+PairTeX gives humans a comfortable manuscript surface while coding agents keep
+working in the repository they already understand. The HTML layer and feedback
+files are disposable/plugin-owned artifacts; the original TeX project stays
+clean and read-only from PairTeX's perspective.
+
 ## Quick start
 
 Point PairTeX at an existing project and an already rendered HTML file:

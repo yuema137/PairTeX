@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 610" role="img" aria-labelledby="title desc">
+  <title id="title">PairTeX human-agent writing loop</title>
+  <desc id="desc">A clean separation between a canonical LaTeX repository, a disposable interactive HTML view, and structured feedback consumed by a coding agent.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1b2a"/>
+      <stop offset="1" stop-color="#172b3d"/>
+    </linearGradient>
+    <linearGradient id="html" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eaf5ff"/>
+      <stop offset="1" stop-color="#dcecf8"/>
+    </linearGradient>
+    <linearGradient id="feedback" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9f6ef"/>
+      <stop offset="1" stop-color="#dceee5"/>
+    </linearGradient>
+    <linearGradient id="source" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff8e8"/>
+      <stop offset="1" stop-color="#f5ecd8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#06101b" flood-opacity=".28"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#8fbcbb"/>
+    </marker>
+    <style>
+      .title { font: 700 30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f4f8fb; }
+      .subtitle { font: 400 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #b8c9d5; }
+      .label { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 1.4px; text-transform: uppercase; }
+      .card-title { font: 700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .body { font: 400 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font: 500 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .small { font: 400 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="610" rx="28" fill="url(#bg)"/>
+  <circle cx="1080" cy="30" r="190" fill="#8ec8f0" opacity=".08"/>
+  <circle cx="70" cy="585" r="170" fill="#8fd0b4" opacity=".07"/>
+
+  <text x="60" y="62" class="title">PairTeX</text>
+  <text x="60" y="91" class="subtitle">A human-facing review layer for repo-aware coding agents</text>
+  <rect x="957" y="43" width="176" height="34" rx="17" fill="#8ec8f0" opacity=".16" stroke="#8ec8f0" stroke-opacity=".45"/>
+  <text x="1045" y="65" text-anchor="middle" class="small" fill="#bfe4f8">LaTeX stays canonical</text>
+
+  <!-- Human-facing HTML card -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="137" width="460" height="300" rx="18" fill="url(#html)"/>
+    <rect x="60" y="137" width="460" height="46" rx="18" fill="#cbe2f1"/>
+    <rect x="60" y="165" width="460" height="18" fill="#cbe2f1"/>
+    <circle cx="86" cy="160" r="5" fill="#e48686"/><circle cx="104" cy="160" r="5" fill="#e7bd67"/><circle cx="122" cy="160" r="5" fill="#80bd9a"/>
+    <text x="84" y="218" class="label" fill="#42647b">Human view · disposable HTML</text>
+    <text x="84" y="253" class="card-title" fill="#162b3b">A readable paper, ready for review</text>
+    <rect x="84" y="274" width="330" height="10" rx="5" fill="#7aa2bb" opacity=".72"/>
+    <rect x="84" y="294" width="380" height="8" rx="4" fill="#91b4c8" opacity=".58"/>
+    <rect x="84" y="312" width="355" height="8" rx="4" fill="#91b4c8" opacity=".58"/>
+    <rect x="84" y="340" width="275" height="30" rx="8" fill="#fff" stroke="#9dc2d8"/>
+    <text x="99" y="360" class="small" fill="#42647b">“Please clarify this claim.”</text>
+    <path d="M380 355 C420 375, 435 390, 455 405" fill="none" stroke="#5e81ac" stroke-width="2" stroke-dasharray="5 5"/>
+    <circle cx="461" cy="411" r="15" fill="#5e81ac"/><path d="M455 411 h12 M461 405 v12" stroke="#fff" stroke-width="2"/>
+  </g>
+
+  <!-- Feedback card -->
+  <g filter="url(#shadow)">
+    <rect x="570" y="137" width="250" height="300" rx="18" fill="url(#feedback)"/>
+    <text x="598" y="218" class="label" fill="#467762">Structured boundary</text>
+    <text x="598" y="253" class="card-title" fill="#18352b">Feedback artifacts</text>
+    <text x="598" y="278" class="mono" fill="#467762">.pairtex/feedback/</text>
+    <rect x="598" y="302" width="194" height="46" rx="9" fill="#fff" stroke="#a7cbb8"/>
+    <circle cx="618" cy="325" r="7" fill="#5ca77e"/>
+    <text x="635" y="330" class="small" fill="#315d49">comment.json</text>
+    <rect x="598" y="360" width="194" height="46" rx="9" fill="#fff" stroke="#a7cbb8"/>
+    <circle cx="618" cy="383" r="7" fill="#d39b4a"/>
+    <text x="635" y="388" class="small" fill="#315d49">change.json</text>
+  </g>
+
+  <!-- Canonical source card -->
+  <g filter="url(#shadow)">
+    <rect x="870" y="137" width="270" height="300" rx="18" fill="url(#source)"/>
+    <text x="900" y="218" class="label" fill="#876d3d">Canonical source</text>
+    <text x="900" y="253" class="card-title" fill="#3b3020">Existing LaTeX repo</text>
+    <text x="900" y="286" class="mono" fill="#806c4a">main.tex</text>
+    <text x="900" y="311" class="mono" fill="#806c4a">sections/*.tex</text>
+    <text x="900" y="336" class="mono" fill="#806c4a">references.bib</text>
+    <text x="900" y="361" class="mono" fill="#806c4a">figures/ · styles/</text>
+    <rect x="900" y="388" width="176" height="26" rx="13" fill="#ead9b3"/>
+    <text x="988" y="406" text-anchor="middle" class="small" fill="#725d34">PairTeX: read only</text>
+  </g>
+
+  <!-- Relationship arrows -->
+  <path d="M520 287 H560" stroke="#8fbcbb" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M820 287 H860" stroke="#8fbcbb" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M1005 450 C1005 510, 195 510, 195 450" fill="none" stroke="#8fbcbb" stroke-width="3" stroke-dasharray="8 8" marker-end="url(#arrow)"/>
+  <text x="600" y="492" text-anchor="middle" class="small" fill="#b8c9d5">agent edits source → commit → rebuild projection → human reviews again</text>
+
+  <text x="60" y="565" class="subtitle">Human reads naturally. The agent works natively. PairTeX keeps the boundary clean.</text>
+</svg>
