@@ -8,6 +8,7 @@ reported renderer errors or missing local assets.
 from __future__ import annotations
 
 import argparse
+import html
 import os
 import re
 import shlex
@@ -20,6 +21,14 @@ from pathlib import Path
 
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+MATH_ENVIRONMENT = re.compile(
+    r"\\begin\{(?P<environment>equation\*?|align\*?|gather\*?|multline\*?|flalign\*?)\}"
+    r"(?P<body>.*?)"
+    r"\\end\{(?P=environment)\}",
+    re.DOTALL,
+)
+MATH_INLINE = re.compile(r"\\\[(.*?)\\\]|\\\((.*?)\\\)|(?<!\\)\$\$(.*?)\$\$|(?<!\\)\$(?!\$)(.*?)(?<!\\)\$", re.DOTALL)
+INPUT_COMMAND = re.compile(r"\\(?:input|include)\s*\{([^}]+)\}")
 
 
 class AssetParser(HTMLParser):
@@ -67,6 +76,127 @@ def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -
             text=True,
             check=False,
         )
+
+
+def strip_tex_comment(line: str) -> str:
+    escaped = False
+    for index, char in enumerate(line):
+        if char == "%" and not escaped:
+            return line[:index]
+        escaped = char == "\\" and not escaped
+        if char != "\\":
+            escaped = False
+    return line
+
+
+def resolve_input(project: Path, current_file: Path, name: str, search_roots: list[Path] | None = None) -> Path | None:
+    candidate = Path(name)
+    options = [current_file.parent / candidate, project / candidate]
+    options.extend(root / candidate for root in search_roots or [])
+    if candidate.suffix != ".tex":
+        options.extend(path.with_suffix(".tex") for path in list(options))
+    return next((path.resolve() for path in options if path.is_file()), None)
+
+
+def source_math(
+    project: Path,
+    path: Path,
+    root: bool = False,
+    seen: set[Path] | None = None,
+    search_roots: list[Path] | None = None,
+) -> list[dict[str, object]]:
+    project = project.resolve()
+    seen = seen or set()
+    path = path.resolve()
+    if path in seen:
+        return []
+    seen.add(path)
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    if root:
+        try:
+            start = next(index for index, line in enumerate(lines) if "\\begin{document}" in line) + 1
+            lines = lines[start:]
+        except StopIteration:
+            pass
+    expanded: list[dict[str, object]] = []
+    for line_number, raw_line in enumerate(lines, start=1):
+        line = strip_tex_comment(raw_line)
+        input_match = INPUT_COMMAND.fullmatch(line.strip())
+        if input_match:
+            included = resolve_input(project, path, input_match.group(1), search_roots)
+            if included:
+                expanded.extend(source_lines(project, included, seen, search_roots))
+            continue
+        expanded.append({"text": line, "file": path, "line": line_number})
+    text = "\n".join(str(item["text"]) for item in expanded)
+    origins: list[tuple[Path, int]] = []
+    for index, item in enumerate(expanded):
+        origin = (Path(str(item["file"])), int(item["line"]))
+        origins.extend(origin for _ in range(len(str(item["text"]))))
+        if index < len(expanded) - 1:
+            origins.append(origin)
+    matches = list(MATH_ENVIRONMENT.finditer(text))
+    occupied = [(match.start(), match.end()) for match in matches]
+    matches.extend(match for match in MATH_INLINE.finditer(text) if not any(start <= match.start() < end for start, end in occupied))
+    matches.sort(key=lambda match: match.start())
+    result = []
+    for match in matches:
+        source = (match.groupdict().get("body") if match.re is MATH_ENVIRONMENT else next(
+            (group for group in match.groups() if group is not None), ""
+        )).strip()
+        if not source:
+            continue
+        source_path, source_line = origins[min(match.start(), len(origins) - 1)]
+        result.append({"source": source, "file": str(source_path.relative_to(project)), "line": source_line})
+    return result
+
+
+def source_lines(
+    project: Path,
+    path: Path,
+    seen: set[Path],
+    search_roots: list[Path] | None = None,
+) -> list[dict[str, object]]:
+    project = project.resolve()
+    lines = []
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
+        line = strip_tex_comment(raw_line)
+        input_match = INPUT_COMMAND.fullmatch(line.strip())
+        if input_match:
+            included = resolve_input(project, path, input_match.group(1), search_roots)
+            if included and included not in seen:
+                seen.add(included)
+                lines.extend(source_lines(project, included, seen, search_roots))
+        else:
+            lines.append({"text": line, "file": path, "line": line_number})
+    return lines
+
+
+def annotate_math_sources(
+    project: Path,
+    input_path: Path,
+    html_path: Path,
+    search_roots: list[Path] | None = None,
+) -> None:
+    math_sources = source_math(project, input_path, root=True, search_roots=search_roots)
+    html_text = html_path.read_text(encoding="utf-8")
+    math_pattern = re.compile(r"<math\b[^>]*>.*?</math>", re.DOTALL | re.IGNORECASE)
+    rendered_math = list(math_pattern.finditer(html_text))
+    if len(math_sources) != len(rendered_math):
+        raise RuntimeError(
+            "Math source mapping rejected: "
+            f"found {len(math_sources)} source formulas but {len(rendered_math)} rendered formulas"
+        )
+    for match, item in reversed(list(zip(rendered_math, math_sources))):
+        source = html.escape(str(item["source"]), quote=True)
+        wrapper = (
+            f'<span class="pairtex-math" data-editable="math" '
+            f'data-source-file="{html.escape(str(item["file"]), quote=True)}" '
+            f'data-source-line="{item["line"]}" data-math-source="{source}">'
+            f'<span class="math-render">{match.group(0)}</span></span>'
+        )
+        html_text = html_text[:match.start()] + wrapper + html_text[match.end():]
+    html_path.write_text(html_text, encoding="utf-8")
 
 
 def run_make4ht(
@@ -130,6 +260,13 @@ def run_make4ht(
             errors.append(f"renderer did not produce {html_path.name}")
 
         if html_path.is_file():
+            search_roots = []
+            for raw_root in (texinputs or "").split(os.pathsep):
+                if not raw_root:
+                    continue
+                root = Path(raw_root.removesuffix("//"))
+                search_roots.append((cwd / root).resolve() if not root.is_absolute() else root.resolve())
+            annotate_math_sources(disposable, disposable_input, html_path, search_roots)
             parser = AssetParser()
             parser.feed(html_path.read_text(encoding="utf-8", errors="replace"))
             materialize_pdf_assets(disposable, html_path, parser.sources)
