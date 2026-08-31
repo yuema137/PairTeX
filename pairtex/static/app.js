@@ -179,14 +179,17 @@ function organizePaper() {
   tabs.addEventListener("click", (event) => {
     const tab = event.target.closest("[data-panel-target]");
     if (!tab) return;
-    const target = tab.dataset.panelTarget;
-    document.querySelectorAll(".paper-tab").forEach((item) => {
-      const active = item === tab;
-      item.classList.toggle("is-active", active);
-      item.setAttribute("aria-selected", String(active));
-    });
-    paperQueryAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
+    activatePaperPanel(tab.dataset.panelTarget, tab);
   });
+}
+
+function activatePaperPanel(target, selectedTab = null) {
+  document.querySelectorAll(".paper-tab").forEach((item) => {
+    const active = selectedTab ? item === selectedTab : item.dataset.panelTarget === target;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-selected", String(active));
+  });
+  paperQueryAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
 }
 
 function markFallbackEditableText() {
@@ -663,6 +666,15 @@ async function refreshView() {
     state.paperShadow.addEventListener("click", (event) => {
       const math = event.target.closest('[data-editable="math"]');
       if (math) openMathEditor(math);
+      const link = event.target.closest(".tableofcontents a[href^='#']");
+      if (!link) return;
+      const targetId = decodeURIComponent(link.getAttribute("href").slice(1));
+      const target = paperQueryAll("[id]").find((node) => node.id === targetId);
+      if (!target) return;
+      event.preventDefault();
+      const panel = target.closest(".paper-panel");
+      activatePaperPanel(panel?.dataset.panel || "home");
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
   state.paperShadow.replaceChildren();

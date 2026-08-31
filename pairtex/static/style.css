@@ -81,6 +81,7 @@ button { cursor: pointer; }
 .paper a { color: var(--link) !important; text-decoration-thickness: .08em; text-underline-offset: .14em; }
 .paper a:hover, .paper a:focus-visible { color: var(--link-hover) !important; }
 .paper a:visited { color: var(--link-visited) !important; }
+.paper .tableofcontents a:visited { color: var(--link) !important; }
 .paper [data-editable="text"] { cursor: text; }
 .paper [data-editable="math"] { cursor: pointer; }
 .paper [data-source-file].has-feedback { outline: 1px dashed var(--border-hi); outline-offset: 7px; }
