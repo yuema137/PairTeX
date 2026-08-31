@@ -16,6 +16,44 @@ LaTeX project, start a local view, and unplug it at any time. No project
 restructuring, source migration, new editor, or replacement build workflow is
 required.
 
+## Where PairTeX fits
+
+[Prism](https://openai.com/prism/) and [Overleaf](https://www.overleaf.com/)
+are complete online writing workspaces. PairTeX is deliberately a different
+layer: a tiny local adapter and feedback protocol for projects that already
+have a LaTeX repository, build workflow, Git history, and coding agent.
+
+| | Prism | Overleaf | PairTeX |
+| --- | --- | --- | --- |
+| Product shape | Cloud AI-native writing workspace | Online collaborative LaTeX workspace | Lightweight local plug-in layer |
+| Canonical work | Prism project | Overleaf project | Existing Git + LaTeX repository |
+| Human interface | Integrated editor and AI assistant | Editor, comments, and track changes | Disposable interactive HTML projection |
+| Agent interface | Built-in AI inside the workspace | Workspace and optional Git integrations | Any coding agent consumes portable feedback artifacts |
+| Git relationship | Git integration is currently unavailable | Git/GitHub integrations are available for eligible plans | Git-native by design |
+| Source boundary | Workspace manages project edits | Workspace manages project edits | PairTeX is read-only; `.tex` / `.bib` remain canonical |
+| AI dependency | Built-in AI | Not required for core editing | No LLM or model API required |
+
+### Use PairTeX when
+
+* the paper already lives in a local Git repository;
+* the existing compiler, templates, macros, and build scripts must stay intact;
+* humans want a comfortable HTML reading/review surface without moving the
+  project into another workspace;
+* the team wants to choose its own coding agent;
+* feedback should be local, auditable, commit-aware, and portable;
+* PairTeX must be removable without changing the manuscript project.
+
+PairTeX is not a replacement for Prism, Overleaf, or a coding agent. Its
+advantage is composability: it adds the missing human-facing review layer and
+agent handoff while leaving the user's source, tools, and ownership model
+alone.
+
+Prism currently supports importing LaTeX projects, but its [official help
+documentation](https://help.openai.com/en/articles/20001050-troubleshooting-and-getting-help-in-prism)
+says that Git integration is not yet available. Overleaf documents Git and
+GitHub synchronization as integrations for eligible plans; PairTeX is Git-native
+without moving the project into a separate workspace.
+
 <p align="center">
   <img src="docs/assets/pairtex-loop.svg" alt="PairTeX loop: a disposable human HTML view connects structured feedback to an unchanged canonical LaTeX repository" width="100%">
 </p>
