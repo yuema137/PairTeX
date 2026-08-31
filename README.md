@@ -152,3 +152,29 @@ in the repository but do not accumulate in the active review view.
 The HTML interface cannot resolve or reopen entries. Resolution belongs to the
 source-side user or coding agent after the canonical source has been changed,
 built, committed, and the HTML projection refreshed.
+
+## Feedback integration contract
+
+Feedback files are independent JSON artifacts. The stable distinction is:
+
+```text
+status:   open | resolved       # lifecycle of source-side consumption
+decision: pending | accepted    # change intent, when kind = change
+kind:     comment | change
+```
+
+An Edit-mode change uses `decision: "accepted"`; a Review-mode proposal uses
+`decision: "pending"`. Neither value means that the TeX source has already been
+modified. Comments remain human feedback and do not imply a deterministic edit.
+
+Each entry carries `head_commit`, `worktree_dirty`, and redundant anchor data:
+file and line hints, section hierarchy, selected rendered/source text, and
+surrounding context. Agents should reconcile these hints against the current
+repository and leave ambiguous entries open.
+
+Entries may also contain a `thread` array of follow-up messages. A source-side
+agent that cannot resolve an item should append a reply explaining the issue or
+asking a concrete question, rather than deleting or prematurely resolving the
+entry. The complete data contract, examples, resolution boundary, and agent
+ownership rules are documented in
+[`skills/pairtex-agent/SKILL.md`](skills/pairtex-agent/SKILL.md).

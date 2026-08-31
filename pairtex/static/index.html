@@ -104,6 +104,22 @@
       </form>
     </dialog>
 
+    <dialog id="thread-dialog">
+      <form method="dialog" id="thread-form">
+        <p class="eyebrow">Discussion thread</p>
+        <h2>Reply to feedback</h2>
+        <p class="quoted" id="thread-quote"></p>
+        <label>
+          Reply
+          <textarea id="thread-message" rows="5" required></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-thread" class="button secondary">Cancel</button>
+          <button value="save" class="button primary">Add reply</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="/themes.js"></script>
     <script src="/theme.js"></script>
     <script src="/app.js"></script>

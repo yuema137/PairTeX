@@ -102,6 +102,10 @@ button { cursor: pointer; }
 .entry__number { display: inline-grid; width: 18px; height: 18px; margin-right: 6px; place-items: center; border: 1px dashed var(--blue); border-radius: 50%; color: var(--blue); font-weight: 400; }
 .entry__quote { margin: 9px 0 5px; font-size: 13px; font-style: italic; }
 .entry__body { margin: 0; font-size: 14px; }
+.entry__thread { display: grid; gap: 8px; margin-top: 11px; padding-left: 10px; border-left: 2px solid var(--accent-soft); }
+.thread-message { padding: 8px 10px; border-radius: 6px; background: var(--surface); }
+.thread-message__meta { color: var(--muted); font: 10px var(--mono); }
+.thread-message p { margin: 4px 0 0; font-size: 13px; white-space: pre-wrap; }
 .entry__meta { margin-top: 9px; color: var(--muted); font: 10px var(--mono); }
 .entry__actions { display: flex; gap: 10px; margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--border); }
 .entry__actions button { padding: 0; border: 0; color: var(--muted); background: transparent; font: 11px var(--mono); }

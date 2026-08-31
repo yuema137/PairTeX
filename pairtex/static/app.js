@@ -15,6 +15,7 @@ const state = {
   targetByEntryId: new Map(),
   paperRoot: null,
   paperShadow: null,
+  threadEntry: null,
 };
 
 function initThemeControls() {
@@ -291,14 +292,64 @@ function renderEntries(entries) {
     const decision = entry.kind === "change" ? ` · ${entry.decision || (entry.status === "pending" ? "pending" : "accepted")}` : "";
     const kind = `${entry.kind === "change" ? "change" : "comment"}${decision} · ${lifecycle}`;
     const number = entry.kind === "change" ? ++changeNumber : null;
+    const thread = Array.isArray(entry.thread) ? entry.thread : [];
+    const threadMarkup = thread.length ? `<div class="entry__thread">${thread.map((message) => `
+      <div class="thread-message">
+        <div class="thread-message__meta">${escapeHtml(message.author || "anonymous")} · ${escapeHtml(message.role || "reply")}</div>
+        <p>${escapeHtml(message.body || "")}</p>
+      </div>`).join("")}</div>` : "";
     return `<article class="entry${lifecycle === "resolved" ? " is-resolved" : ""}" data-entry-id="${escapeHtml(entry.id)}">
       <div class="entry__top"><span>${number ? `<b class="entry__number">${number}</b>` : ""}${escapeHtml(kind)}</span><span>${escapeHtml(entry.author || "anonymous")}</span></div>
       <p class="entry__quote">“${escapeHtml(entry.anchor?.selected_rendered_text || "Document location") }”</p>
       <p class="entry__body">${escapeHtml(body)}</p>
+      ${threadMarkup}
       <div class="entry__meta">${escapeHtml(entry.anchor?.file_hint || "unknown source")} · ${escapeHtml((entry.anchor?.section || []).join(" / ") || "document")}${entry.worktree_dirty ? " · local changes" : ""}</div>
-      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
+      <div class="entry__actions"><button data-entry-action="locate">Locate</button><button data-entry-action="reply">Reply</button><button data-entry-action="edit">Edit</button><button data-entry-action="delete">Delete</button></div>
     </article>`;
   }).join("") : `<p class="help">No feedback entries yet.</p>`;
+}
+
+function openThreadDialog(entry) {
+  state.threadEntry = entry;
+  $("#thread-quote").textContent = `“${entry.anchor?.selected_rendered_text || "Document location"}”`;
+  $("#thread-message").value = "";
+  $("#thread-dialog").showModal();
+}
+
+async function saveThreadReply(event) {
+  event.preventDefault();
+  if (event.submitter?.value !== "save" || !state.threadEntry) {
+    $("#thread-dialog").close();
+    return;
+  }
+  const body = $("#thread-message").value.trim();
+  if (!body) return;
+  const entry = state.threadEntry;
+  const updated = {
+    ...entry,
+    thread: [...(Array.isArray(entry.thread) ? entry.thread : []), {
+      id: crypto.randomUUID(),
+      author: state.project.author || "human",
+      role: "human",
+      body,
+      created_at: new Date().toISOString(),
+    }],
+  };
+  const response = await fetch(`/api/entries/${encodeURIComponent(entry.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updated),
+  });
+  if (!response.ok) {
+    alert("Could not add the reply.");
+    return;
+  }
+  const saved = await response.json();
+  state.project.entries = state.project.entries.map((item) => item.id === saved.id ? saved : item);
+  renderEntries(state.project.entries);
+  decoratePaper(state.project.entries);
+  state.threadEntry = null;
+  $("#thread-dialog").close();
 }
 
 function decoratePaper(entries) {
@@ -756,6 +807,11 @@ async function init() {
     state.editingEntry = null;
     $("#entry-dialog").close();
   });
+  $("#thread-form").addEventListener("submit", saveThreadReply);
+  $("#cancel-thread").addEventListener("click", () => {
+    state.threadEntry = null;
+    $("#thread-dialog").close();
+  });
   $("#entries").addEventListener("click", (event) => {
     const action = event.target.closest("button")?.dataset.entryAction;
     if (!action) return;
@@ -763,6 +819,7 @@ async function init() {
     const entry = state.project.entries.find((item) => item.id === entryId);
     if (!entry) return;
     if (action === "edit") openExistingEntry(entry);
+    if (action === "reply") openThreadDialog(entry);
     if (action === "delete") deleteEntry(entry);
     if (action === "locate") locateEntry(entry);
   });
