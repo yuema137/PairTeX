@@ -38,7 +38,7 @@ button { cursor: pointer; }
 .paper-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .paper-tab { border: 0; border-radius: 999px; padding: 7px 14px; color: var(--muted); background: transparent; font-size: 13px; }
 .paper-tab:hover, .paper-tab.is-active { color: var(--fg); background: var(--blue-soft); }
-.paper { max-width: 760px; min-width: 0; }
+.paper { width: 100%; max-width: none; min-width: 0; }
 .paper-panel { display: none; }
 .paper-panel.is-active { display: block; }
 .paper.is-editing { padding: 20px 18px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,.18); }

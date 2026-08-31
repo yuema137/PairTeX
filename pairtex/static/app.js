@@ -553,6 +553,9 @@ async function init() {
     layoutOverride.textContent = "body { max-width: none !important; margin: 0 !important; padding: 0 !important; }";
     document.head.append(layoutOverride);
   }
+  document.body.style.setProperty("max-width", "none", "important");
+  document.body.style.setProperty("margin", "0", "important");
+  document.body.style.setProperty("padding", "0", "important");
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
   organizePaper();
   captureEditBaselines();
