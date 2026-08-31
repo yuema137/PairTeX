@@ -21,9 +21,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-color-mode]) { --bg: #08131d; --card: rgba(255,255,255,.06); --fg: #e3edf8; --muted: #8ba6c2; --border: rgba(150,200,245,.16); --border-hi: rgba(150,200,245,.30); --accent: #8ec8f0; --accent-soft: rgba(90,169,224,.14); --surface: rgba(255,255,255,.035); --surface-raised: rgba(255,255,255,.06); --ambient: rgba(62,132,188,.20); --ambient-soft: rgba(56,111,158,.14); }
+  :root:not([data-color-mode]) { --bg: #08131d; --card: rgba(255,255,255,.06); --fg: #e3edf8; --muted: #8ba6c2; --border: rgba(150,200,245,.16); --border-hi: rgba(150,200,245,.30); --accent: #8ec8f0; --accent-soft: rgba(90,169,224,.14); --link: #a8b3c2; --link-hover: #d0d7de; --link-visited: #b8a9c9; --surface: rgba(255,255,255,.035); --surface-raised: rgba(255,255,255,.06); --ambient: rgba(62,132,188,.20); --ambient-soft: rgba(56,111,158,.14); }
 }
-:root[data-color-mode="dark"] { --bg: #08131d; --card: rgba(255,255,255,.06); --fg: #e3edf8; --muted: #8ba6c2; --border: rgba(150,200,245,.16); --border-hi: rgba(150,200,245,.30); --accent: #8ec8f0; --accent-soft: rgba(90,169,224,.14); --surface: rgba(255,255,255,.035); --surface-raised: rgba(255,255,255,.06); --ambient: rgba(62,132,188,.20); --ambient-soft: rgba(56,111,158,.14); color-scheme: dark; }
+:root[data-color-mode="dark"] { --bg: #08131d; --card: rgba(255,255,255,.06); --fg: #e3edf8; --muted: #8ba6c2; --border: rgba(150,200,245,.16); --border-hi: rgba(150,200,245,.30); --accent: #8ec8f0; --accent-soft: rgba(90,169,224,.14); --link: #a8b3c2; --link-hover: #d0d7de; --link-visited: #b8a9c9; --surface: rgba(255,255,255,.035); --surface-raised: rgba(255,255,255,.06); --ambient: rgba(62,132,188,.20); --ambient-soft: rgba(56,111,158,.14); color-scheme: dark; }
 :root[data-color-mode="light"] { --bg: #f1f6fb; --card: rgba(255,255,255,.78); --fg: #101f2e; --muted: #526c87; --border: rgba(22,62,105,.14); --border-hi: rgba(22,62,105,.30); --accent: #1a4e7a; --accent-soft: rgba(58,126,187,.12); --surface: rgba(255,255,255,.54); --surface-raised: rgba(255,255,255,.78); --ambient: rgba(96,164,228,.22); --ambient-soft: rgba(126,186,235,.16); color-scheme: light; }
 :root[data-palette="sage"] { --accent: #2e765f; --accent-soft: rgba(46,118,95,.13); --ambient: rgba(89,174,143,.19); --ambient-soft: rgba(101,184,153,.13); }
 :root[data-palette="sage"][data-color-mode="dark"] { --accent: #8fd0b4; --accent-soft: rgba(111,196,157,.16); --ambient: rgba(53,137,106,.20); --ambient-soft: rgba(54,117,92,.14); }
@@ -78,6 +78,9 @@ button { cursor: pointer; }
 .paper figcaption { color: var(--muted); font-size: 13px; }
 .paper [data-source-file] { position: relative; border-radius: 3px; }
 .paper [data-source-file]:hover { background: var(--blue-soft); }
+.paper a { color: var(--link) !important; text-decoration-thickness: .08em; text-underline-offset: .14em; }
+.paper a:hover, .paper a:focus-visible { color: var(--link-hover) !important; }
+.paper a:visited { color: var(--link-visited) !important; }
 .paper [data-editable="text"] { cursor: text; }
 .paper [data-editable="math"] { cursor: pointer; }
 .paper [data-source-file].has-feedback { outline: 1px dashed var(--border-hi); outline-offset: 7px; }
