@@ -615,9 +615,9 @@ async function saveEntry(event) {
   window.getSelection()?.removeAllRanges();
 }
 
-async function init() {
-  initThemeControls();
-  state.project = await (await fetch("/api/state")).json();
+async function refreshView() {
+  const project = await (await fetch(`/api/state?refresh=${Date.now()}`, { cache: "no-store" })).json();
+  state.project = project;
   const template = document.createElement("template");
   template.innerHTML = state.project.manuscript_html;
   const sourceBody = template.content.querySelector("body");
@@ -649,6 +649,28 @@ async function init() {
   $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
   decoratePaper(state.project.entries);
+}
+
+async function refreshFromServer() {
+  if (state.editDirty.size || state.mathDirty.size) {
+    if (!confirm("Refresh and discard unsaved local edits?")) return;
+  }
+  const button = $("#refresh-view");
+  button.disabled = true;
+  button.textContent = "Refreshing…";
+  try {
+    await refreshView();
+  } catch (error) {
+    alert(`Could not refresh the manuscript: ${error.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Refresh";
+  }
+}
+
+async function init() {
+  initThemeControls();
+  await refreshView();
   setMode("edit");
   document.addEventListener("selectionchange", showTools);
   $("#selection-tools").addEventListener("click", (event) => {
@@ -659,6 +681,7 @@ async function init() {
   $("#paper").addEventListener("input", scheduleDirectEdit);
   $("#save-edits").addEventListener("click", saveEdits);
   $("#discard-edits").addEventListener("click", discardEdits);
+  $("#refresh-view").addEventListener("click", refreshFromServer);
   $("#paper").addEventListener("click", (event) => {
     const math = event.target.closest('[data-editable="math"]');
     if (math) openMathEditor(math);
