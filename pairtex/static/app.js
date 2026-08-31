@@ -41,7 +41,7 @@ function organizePaper() {
   const paper = $("#paper");
   const children = [...paper.children];
   const topLevelSections = children.filter((node) => node.matches("section[data-section], section.abstract"));
-  const sectionHeads = children.filter((node) => node.matches("h3.sectionHead"));
+  const sectionHeads = children.filter((node) => node.matches("h3.sectionHead, h3.likesectionHead"));
   if (!topLevelSections.length && !sectionHeads.length) return;
 
   const home = document.createElement("div");
@@ -49,7 +49,7 @@ function organizePaper() {
   home.dataset.panel = "home";
   const sectionPanels = [];
 
-  if (!topLevelSections.length && sectionHeads.length) {
+  if (sectionHeads.length) {
     const homeNodes = [];
     let panel = null;
     children.forEach((node) => {
@@ -60,6 +60,8 @@ function organizePaper() {
         panel.dataset.panel = panelId(name);
         panel.append(node);
         sectionPanels.push({ name, panel });
+      } else if (node.matches(".tableofcontents")) {
+        homeNodes.push(node);
       } else if (panel) {
         panel.append(node);
       } else {
