@@ -132,7 +132,8 @@ agent modifies canonical source
     -> agent regenerates HTML from the resulting source
     -> human/agent inspects the new projection
     -> source changes are committed
-    -> addressed feedback is marked resolved with that commit
+    -> addressed feedback is marked resolved with that source commit
+    -> feedback metadata may be committed separately for Git exchange
     -> human clicks Refresh in PairTeX
 ```
 
@@ -141,6 +142,12 @@ must not resolve it just because the turn is ending; it should append a thread
 reply and keep it open. The human should click `Refresh` only after the agent
 has regenerated the HTML. Refresh rereads the current HTML and feedback; it
 does not compile TeX or consume feedback.
+
+The `resolution_commit` must point to the canonical source commit that
+addressed the item. Since that SHA is only known after the source commit is
+created, updating the JSON resolution metadata may require a separate
+feedback-only commit. Such a bookkeeping commit does not create a new
+manuscript turn; only a subsequent canonical source commit does.
 
 ### 4. Verify that the skill was actually used
 
