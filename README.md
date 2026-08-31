@@ -1,20 +1,17 @@
 # PairTeX
 
-Human-agent pair writing for existing LaTeX papers.
+## Lightweight human-agent writing for any local LaTeX project
 
-PairTeX renders an existing LaTeX repository as a readable, interactive local
-HTML view. Humans can edit supported prose/math, propose changes, and leave
-comments. PairTeX stores those actions as feedback artifacts; it never edits
-`.tex`, `.bib`, figures, or other canonical source files. LaTeX remains the
-single source of truth, while HTML is disposable.
+**Plug in locally. Keep your source. Use any coding agent.**
 
-PairTeX is deterministic and does not require an LLM, model API, or agent
-runtime.
+PairTeX is a small, deterministic, hot-pluggable review layer for existing
+LaTeX projects. It turns a rendered manuscript into a readable interactive
+HTML artifact for human editing, review, and comments, then records those
+interactions as structured feedback artifacts for the user's coding agent.
 
-PairTeX is intentionally tiny and hot-pluggable: point it at an existing
-LaTeX project, start a local view, and unplug it at any time. No project
-restructuring, source migration, new editor, or replacement build workflow is
-required.
+PairTeX does not replace the project, the compiler, Git, or the agent. The
+original LaTeX repository remains canonical and read-only from PairTeX's
+perspective; HTML and feedback files are disposable companion artifacts.
 
 <p align="center">
   <img src="docs/assets/pairtex-loop.svg" alt="PairTeX loop: a disposable human HTML view connects structured feedback to an unchanged canonical LaTeX repository" width="100%">
