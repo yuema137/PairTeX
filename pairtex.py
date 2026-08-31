@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from pairtex_validation import validate_rendered_html
 
@@ -123,6 +123,13 @@ class Handler(BaseHTTPRequestHandler):
             file_path = STATIC_DIR / path.lstrip("/")
             content_type = mimetypes.guess_type(file_path.name)[0] or "text/plain"
             self.send_bytes(file_path.read_bytes(), f"{content_type}; charset=utf-8")
+            return
+        resource = unquote(path.lstrip("/"))
+        resource_path = (self.app.html_path.parent / resource).resolve()
+        html_root = self.app.html_path.parent.resolve()
+        if resource_path.is_relative_to(html_root) and resource_path.is_file():
+            content_type = mimetypes.guess_type(resource_path.name)[0] or "application/octet-stream"
+            self.send_bytes(resource_path.read_bytes(), content_type)
             return
         self.send_error(HTTPStatus.NOT_FOUND)
 

@@ -29,20 +29,40 @@ function panelId(name) {
 
 function organizePaper() {
   const paper = $("#paper");
-  const topLevelSections = [...paper.children].filter((node) => node.matches("section[data-section]"));
-  if (!topLevelSections.length) return;
+  const children = [...paper.children];
+  const topLevelSections = children.filter((node) => node.matches("section[data-section], section.abstract"));
+  const sectionHeads = children.filter((node) => node.matches("h3.sectionHead"));
+  if (!topLevelSections.length && !sectionHeads.length) return;
 
   const home = document.createElement("div");
   home.className = "paper-panel is-active";
   home.dataset.panel = "home";
   const sectionPanels = [];
 
-  [...paper.children].forEach((node) => {
-    if (!node.matches("section[data-section]")) {
+  if (!topLevelSections.length && sectionHeads.length) {
+    const homeNodes = [];
+    let panel = null;
+    children.forEach((node) => {
+      if (node.matches("h3.sectionHead")) {
+        const name = node.textContent.replace(/^\s*\d+\s*/, "").trim();
+        panel = document.createElement("div");
+        panel.className = "paper-panel";
+        panel.dataset.panel = panelId(name);
+        panel.append(node);
+        sectionPanels.push({ name, panel });
+      } else if (panel) {
+        panel.append(node);
+      } else {
+        homeNodes.push(node);
+      }
+    });
+    homeNodes.forEach((node) => home.append(node));
+  } else [...paper.children].forEach((node) => {
+    if (!node.matches("section[data-section], section.abstract")) {
       home.append(node);
       return;
     }
-    const name = node.dataset.section.trim();
+    const name = (node.dataset.section || "Abstract").trim();
     if (name.toLowerCase() === "abstract") {
       home.append(node);
       return;
@@ -517,7 +537,19 @@ async function saveEntry(event) {
 
 async function init() {
   state.project = await (await fetch("/api/state")).json();
-  $("#paper").innerHTML = state.project.manuscript_html;
+  const template = document.createElement("template");
+  template.innerHTML = state.project.manuscript_html;
+  const sourceBody = template.content.querySelector("body");
+  const sourceHead = template.content.querySelector("head");
+  if (sourceHead) {
+    sourceHead.querySelectorAll('link[rel="stylesheet"][href]').forEach((link) => {
+      const stylesheet = document.createElement("link");
+      stylesheet.rel = "stylesheet";
+      stylesheet.href = link.getAttribute("href");
+      document.head.append(stylesheet);
+    });
+  }
+  $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
   organizePaper();
   captureEditBaselines();
   if (window.MathJax?.startup?.promise) {
