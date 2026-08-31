@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -68,7 +69,14 @@ def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -
         )
 
 
-def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | None, tex4ht_options: str) -> None:
+def run_make4ht(
+    project: Path,
+    input_path: Path,
+    output: Path,
+    texinputs: str | None,
+    tex4ht_options: str,
+    build_command: str | None,
+) -> None:
     input_path = input_path.resolve()
     project = project.resolve()
     if not project.is_dir():
@@ -88,7 +96,22 @@ def run_make4ht(project: Path, input_path: Path, output: Path, texinputs: str | 
         environment = os.environ.copy()
         if texinputs:
             environment["TEXINPUTS"] = texinputs + environment.get("TEXINPUTS", "")
-        build_directory = ".pairtex-render-build"
+        build_directory = "build"
+
+        if build_command:
+            build = subprocess.run(
+                [part.format(input=disposable_input.name) for part in shlex.split(build_command)],
+                cwd=cwd,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if build.returncode != 0:
+                raise RuntimeError(
+                    "Project build rejected before HTML rendering:\n"
+                    + (build.stdout + build.stderr).strip()
+                )
 
         result = subprocess.run(
             ["make4ht", "-B", build_directory, disposable_input.name, tex4ht_options],
@@ -135,9 +158,20 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True, help="Directory receiving accepted HTML output")
     parser.add_argument("--texinputs", help="Optional TEXINPUTS prefix required by the project renderer")
     parser.add_argument("--tex4ht-options", default="xhtml,mathml", help="TeX4ht style options (default: xhtml,mathml)")
+    parser.add_argument(
+        "--build-command",
+        help="Optional project build command run before rendering; use {input} for the manuscript filename",
+    )
     args = parser.parse_args()
     try:
-        run_make4ht(args.project, args.project / args.input, args.output, args.texinputs, args.tex4ht_options)
+        run_make4ht(
+            args.project,
+            args.project / args.input,
+            args.output,
+            args.texinputs,
+            args.tex4ht_options,
+            args.build_command,
+        )
     except (OSError, ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
         return 1

@@ -60,11 +60,14 @@ python3 pairtex_render.py \
   --project /path/to/paper \
   --input arxiv/main.tex \
   --output /tmp/pairtex-rendered \
-  --texinputs '../shared//:'
+  --texinputs '../shared//:' \
+  --build-command 'latexmk -pdf -interaction=nonstopmode -halt-on-error {input}'
 ```
 
-The target project's renderer-specific path settings are supplied explicitly;
-PairTeX does not edit the target project to make a renderer work.
+The optional build command lets a project produce its normal bibliography and
+cross-reference artifacts before HTML conversion. The target project's build
+and renderer-specific path settings are supplied explicitly; PairTeX does not
+edit the target project to make a renderer work.
 
 ## Generic compatibility rule
 
