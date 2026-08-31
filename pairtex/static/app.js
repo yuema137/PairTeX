@@ -50,10 +50,18 @@ function initThemeControls() {
       root.style.setProperty(`--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`, value);
     });
     if (tokens) {
+      Object.entries(tokens).forEach(([name, value]) => {
+        const property = `--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+        document.body.style.setProperty(property, value);
+      });
       document.body.style.setProperty("background-color", tokens.bg, "important");
       document.body.style.setProperty("color", tokens.fg, "important");
       const paper = $("#paper");
       if (paper) {
+        Object.entries(tokens).forEach(([name, value]) => {
+          const property = `--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+          paper.style.setProperty(property, value);
+        });
         paper.style.setProperty("background-color", tokens.bg, "important");
         paper.style.setProperty("color", tokens.fg, "important");
       }
