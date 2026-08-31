@@ -21,7 +21,7 @@ function initThemeControls() {
   const paletteSelect = $("#theme-palette");
   const palettes = window.PairTeXPalettes || {};
   Object.entries(palettes).forEach(([id, palette]) => {
-    if (paletteSelect.querySelector(`option[value="${CSS.escape(id)}"]`)) return;
+    if ([...paletteSelect.options].some((option) => option.value === id)) return;
     const option = document.createElement("option");
     option.value = id;
     option.textContent = palette.label || id;
