@@ -39,7 +39,13 @@ function initThemeControls() {
     if (modeSelect.value === "system") delete root.dataset.colorMode;
     else root.dataset.colorMode = effectiveMode;
     root.dataset.palette = paletteSelect.value;
-    const tokens = palettes[paletteSelect.value]?.[effectiveMode];
+    const rawTokens = palettes[paletteSelect.value]?.[effectiveMode];
+    const tokens = rawTokens && {
+      ...rawTokens,
+      link: rawTokens.link || rawTokens.accent,
+      linkHover: rawTokens.linkHover || rawTokens.accent,
+      linkVisited: rawTokens.linkVisited || rawTokens.accent,
+    };
     if (tokens) Object.entries(tokens).forEach(([name, value]) => {
       root.style.setProperty(`--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`, value);
     });
@@ -645,7 +651,14 @@ async function refreshView() {
       body[data-pairtex-host] #paper :where(h1, h2, h3, h4, h5, h6, p, li, dd, dt, td, th, figcaption, caption, blockquote, div, span) {
         color: inherit !important;
       }
-      body[data-pairtex-host] #paper a { color: var(--accent) !important; }
+      body[data-pairtex-host] #paper a {
+        color: var(--link) !important;
+        text-decoration-thickness: .08em;
+        text-underline-offset: .14em;
+      }
+      body[data-pairtex-host] #paper a:hover,
+      body[data-pairtex-host] #paper a:focus-visible { color: var(--link-hover) !important; }
+      body[data-pairtex-host] #paper a:visited { color: var(--link-visited) !important; }
       body[data-pairtex-host] { max-width: none !important; margin: 0 !important; padding: 0 !important; }
     `;
     document.head.append(layoutOverride);

@@ -7,6 +7,9 @@
   --border-hi: rgba(22, 62, 105, .30);
   --accent: #1a4e7a;
   --accent-soft: rgba(58, 126, 187, .12);
+  --link: #1a5f9e;
+  --link-hover: #124c80;
+  --link-visited: #68459a;
   --surface: rgba(255, 255, 255, .54);
   --surface-raised: rgba(255, 255, 255, .78);
   --ambient: rgba(96, 164, 228, .22);

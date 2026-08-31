@@ -87,7 +87,9 @@ only in the local browser and do not affect the manuscript, renderer output,
 feedback entries, or source repository.
 
 Palettes use a small replaceable schema with `label`, `light`, and `dark`
-tokens. A local project may add `.pairtex/theme.js` defining
+tokens. In addition to the surface tokens, `link`, `linkHover`, and
+`linkVisited` may be supplied to keep document links readable in dark mode;
+they fall back to `accent` when omitted. A local project may add `.pairtex/theme.js` defining
 `window.PairTeXCustomPalettes` with the same shape:
 
 ```js
