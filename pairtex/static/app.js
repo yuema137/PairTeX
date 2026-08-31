@@ -13,6 +13,8 @@ const state = {
   mathBlock: null,
   mathBaseline: "",
   targetByEntryId: new Map(),
+  paperRoot: null,
+  paperShadow: null,
 };
 
 function initThemeControls() {
@@ -83,12 +85,20 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function paperQueryAll(selector) {
+  return [...(state.paperRoot?.querySelectorAll(selector) || [])];
+}
+
+function paperChildren() {
+  return [...(state.paperRoot?.children || [])];
+}
+
 function panelId(name) {
   return `section-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "document"}`;
 }
 
 function wrapTables() {
-  document.querySelectorAll("#paper table:not(.equation)").forEach((table) => {
+  paperQueryAll("table:not(.equation)").forEach((table) => {
     if (table.parentElement?.classList.contains("table-scroll")) return;
     const wrapper = document.createElement("div");
     wrapper.className = "table-scroll";
@@ -98,7 +108,7 @@ function wrapTables() {
 }
 
 function cleanRendererArtifacts() {
-  const paper = $("#paper");
+  const paper = state.paperRoot;
   const walker = document.createTreeWalker(paper, NodeFilter.SHOW_TEXT);
   const removable = [];
   while (walker.nextNode()) {
@@ -110,8 +120,8 @@ function cleanRendererArtifacts() {
 }
 
 function organizePaper() {
-  const paper = $("#paper");
-  const children = [...paper.children];
+  const paper = state.paperRoot;
+  const children = paperChildren();
   const topLevelSections = children.filter((node) => node.matches("section[data-section], section.abstract"));
   const sectionHeads = children.filter((node) => node.matches("h3.sectionHead, h3.likesectionHead"));
   if (!topLevelSections.length && !sectionHeads.length) return;
@@ -142,7 +152,7 @@ function organizePaper() {
       }
     });
     homeNodes.forEach((node) => home.append(node));
-  } else [...paper.children].forEach((node) => {
+  } else paperChildren().forEach((node) => {
     if (!node.matches("section[data-section], section.abstract")) {
       home.append(node);
       return;
@@ -175,12 +185,12 @@ function organizePaper() {
       item.classList.toggle("is-active", active);
       item.setAttribute("aria-selected", String(active));
     });
-    document.querySelectorAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
+    paperQueryAll(".paper-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === target));
   });
 }
 
 function markFallbackEditableText() {
-  document.querySelectorAll("#paper p").forEach((block) => {
+  paperQueryAll("p").forEach((block) => {
     if (block.dataset.editable || block.closest(".thebibliography, figure, figcaption, .tableofcontents")) return;
     if (block.querySelector("img, table, math, svg")) return;
     const text = block.innerText.trim();
@@ -212,7 +222,7 @@ function sortEntries(entries) {
 function renderedOffset(entry) {
   const storedOffset = entry.anchor?.rendered_offset;
   if (Number.isFinite(storedOffset) && storedOffset >= 0) return storedOffset;
-  const target = [...document.querySelectorAll("[data-source-file], [data-editable=\"text\"]")].find((node) => {
+  const target = paperQueryAll("[data-source-file], [data-editable=\"text\"]").find((node) => {
     const section = (node.dataset.section || "").split("/").filter(Boolean);
     const fileMatches = entry.anchor?.file_hint
       ? node.dataset.sourceFile === entry.anchor.file_hint
@@ -291,14 +301,14 @@ function renderEntries(entries) {
 function decoratePaper(entries) {
   const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
   state.targetByEntryId.clear();
-  document.querySelectorAll("[data-source-file], [data-editable=\"text\"]").forEach((node) => {
+  paperQueryAll("[data-source-file], [data-editable=\"text\"]").forEach((node) => {
     node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
     node.removeAttribute("data-feedback-number");
   });
   let changeNumber = 0;
   orderedEntries.forEach((entry) => {
-    const target = [...document.querySelectorAll("[data-source-file], [data-editable=\"text\"]")].find((node) => {
+    const target = paperQueryAll("[data-source-file], [data-editable=\"text\"]").find((node) => {
       const section = (node.dataset.section || "").split("/").filter(Boolean);
       const fileMatches = entry.anchor?.file_hint
         ? node.dataset.sourceFile === entry.anchor.file_hint
@@ -321,13 +331,13 @@ function captureEditBaselines() {
   state.editDirty.clear();
   state.mathDirty.clear();
   state.editMarkupBaselines = new Map(
-    [...document.querySelectorAll('[data-editable="text"], [data-editable="math"]')].map((node) => [node, node.innerHTML]),
+    paperQueryAll('[data-editable="text"], [data-editable="math"]').map((node) => [node, node.innerHTML]),
   );
   state.mathSourceBaselines = new Map(
-    [...document.querySelectorAll('[data-editable="math"]')].map((node) => [node, node.dataset.mathSource || ""]),
+    paperQueryAll('[data-editable="math"]').map((node) => [node, node.dataset.mathSource || ""]),
   );
   state.editBaselines = new Map(
-    [...document.querySelectorAll('[data-editable="text"]')].map((node) => [node, node.innerText.trim()]),
+    paperQueryAll('[data-editable="text"]').map((node) => [node, node.innerText.trim()]),
   );
 }
 
@@ -519,11 +529,11 @@ async function saveEdits() {
 
 function setMode(mode) {
   state.mode = mode;
-  $("#paper").contentEditable = "false";
-  document.querySelectorAll('[data-editable="text"]').forEach((block) => {
+  state.paperRoot.contentEditable = "false";
+  paperQueryAll('[data-editable="text"]').forEach((block) => {
     block.contentEditable = mode === "edit" ? "true" : "false";
   });
-  $("#paper").classList.toggle("is-editing", mode === "edit");
+  state.paperRoot.classList.toggle("is-editing", mode === "edit");
   $("#change-action").textContent = mode === "edit" ? "Edit text" : "Suggest edit";
   $("#mode-hint").textContent = mode === "edit"
     ? "Edit the manuscript directly. Changes are recorded as accepted intents."
@@ -536,7 +546,7 @@ function locateEntry(entry) {
   const target = state.targetByEntryId.get(entry.id);
   const card = document.querySelector(`[data-entry-id="${CSS.escape(entry.id)}"]`);
   if (!target || !card) return;
-  document.querySelectorAll(".has-feedback").forEach((node) => node.classList.remove("is-focused"));
+  paperQueryAll(".has-feedback").forEach((node) => node.classList.remove("is-focused"));
   document.querySelectorAll(".entry").forEach((node) => node.classList.remove("is-focused"));
   target.classList.add("is-focused");
   card.classList.add("is-focused");
@@ -646,54 +656,48 @@ async function refreshView() {
   template.innerHTML = state.project.manuscript_html;
   const sourceBody = template.content.querySelector("body");
   const sourceHead = template.content.querySelector("head");
+  const host = $("#paper");
+  if (!state.paperShadow) {
+    state.paperShadow = host.attachShadow({ mode: "open" });
+    state.paperShadow.addEventListener("input", scheduleDirectEdit);
+    state.paperShadow.addEventListener("click", (event) => {
+      const math = event.target.closest('[data-editable="math"]');
+      if (math) openMathEditor(math);
+    });
+  }
+  state.paperShadow.replaceChildren();
+  const rendererLinks = [];
   if (sourceHead) {
     sourceHead.querySelectorAll('link[rel="stylesheet"][href]').forEach((link) => {
       const stylesheet = document.createElement("link");
       stylesheet.rel = "stylesheet";
       stylesheet.href = link.getAttribute("href");
-      document.head.append(stylesheet);
+      rendererLinks.push(stylesheet);
     });
-    const layoutOverride = document.createElement("style");
-    layoutOverride.dataset.pairtex = "layout-override";
-    layoutOverride.textContent = `
-      html[data-pairtex-host], body[data-pairtex-host] {
-        background: var(--bg) !important;
-        color: var(--fg) !important;
-        color-scheme: inherit !important;
-      }
-      body[data-pairtex-host] #paper {
-        background: var(--bg) !important;
-        color: var(--fg) !important;
-      }
-      body[data-pairtex-host] #paper :where(h1, h2, h3, h4, h5, h6, p, li, dd, dt, td, th, figcaption, caption, blockquote, div, span) {
-        color: inherit !important;
-      }
-      body[data-pairtex-host] #paper a {
-        color: var(--link) !important;
-        text-decoration-thickness: .08em;
-        text-underline-offset: .14em;
-      }
-      body[data-pairtex-host] #paper a:hover,
-      body[data-pairtex-host] #paper a:focus-visible { color: var(--link-hover) !important; }
-      body[data-pairtex-host] #paper a:visited { color: var(--link-visited) !important; }
-      body[data-pairtex-host] { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-    `;
-    document.head.append(layoutOverride);
+    sourceHead.querySelectorAll("style").forEach((style) => {
+      const rendererStyle = document.createElement("style");
+      rendererStyle.textContent = style.textContent;
+      rendererLinks.push(rendererStyle);
+    });
   }
-  document.documentElement.dataset.pairtexHost = "true";
-  document.body.style.setProperty("max-width", "none", "important");
-  document.body.style.setProperty("margin", "0", "important");
-  document.body.style.setProperty("padding", "0", "important");
-  document.body.style.setProperty("background-color", "var(--bg)", "important");
-  document.body.style.setProperty("color", "var(--fg)", "important");
-  $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
+  const pairtexStylesheet = document.createElement("link");
+  pairtexStylesheet.rel = "stylesheet";
+  pairtexStylesheet.href = `/style.css?shadow=${Date.now()}`;
+  const renderRoot = document.createElement("div");
+  renderRoot.className = "paper";
+  renderRoot.dataset.pairtexRenderRoot = "true";
+  renderRoot.append(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
+  state.paperShadow.append(...rendererLinks, pairtexStylesheet, renderRoot);
+  state.paperRoot = renderRoot;
+  renderRoot.style.setProperty("background-color", "var(--bg)", "important");
+  renderRoot.style.setProperty("color", "var(--fg)", "important");
   cleanRendererArtifacts();
   wrapTables();
   organizePaper();
   markFallbackEditableText();
   captureEditBaselines();
   if (window.MathJax?.startup?.promise) {
-    window.MathJax.startup.promise.then(() => typesetMath($("#paper"))).catch(() => {});
+    window.MathJax.startup.promise.then(() => typesetMath(state.paperRoot)).catch(() => {});
   }
   $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
@@ -727,14 +731,9 @@ async function init() {
     if (action) openEntryDialog(action === "change" ? "change" : "comment");
   });
   $("#entry-form").addEventListener("submit", saveEntry);
-  $("#paper").addEventListener("input", scheduleDirectEdit);
   $("#save-edits").addEventListener("click", saveEdits);
   $("#discard-edits").addEventListener("click", discardEdits);
   $("#refresh-view").addEventListener("click", refreshFromServer);
-  $("#paper").addEventListener("click", (event) => {
-    const math = event.target.closest('[data-editable="math"]');
-    if (math) openMathEditor(math);
-  });
   $("#math-source").addEventListener("input", (event) => renderMathPreview(event.target.value));
   $("#math-form").addEventListener("submit", saveMathEdit);
   $("#cancel-math").addEventListener("click", () => {
