@@ -218,13 +218,26 @@ def normalize_html_document(html_path: Path) -> None:
         html_path.write_text(html_text[doctype:], encoding="utf-8")
 
 
-def run_make4ht(
+def find_adapter_html(output: Path, stem: str) -> Path:
+    expected = output / f"{stem}.html"
+    if expected.is_file():
+        return expected
+    candidates = sorted(output.rglob("*.html"))
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise RuntimeError("renderer adapter did not produce an HTML file")
+    raise RuntimeError("renderer adapter produced more than one HTML file")
+
+
+def run_renderer(
     project: Path,
     input_path: Path,
     output: Path,
     texinputs: str | None,
     tex4ht_options: str,
     build_command: str | None,
+    adapter_command: str | None,
 ) -> None:
     input_path = input_path.resolve()
     project = project.resolve()
@@ -262,8 +275,21 @@ def run_make4ht(
                     + (build.stdout + build.stderr).strip()
                 )
 
+        adapter_output = disposable / "pairtex-adapter-output"
+        adapter_output.mkdir()
+        if adapter_command:
+            command = [
+                part.format(
+                    project=str(disposable),
+                    input=str(disposable_input),
+                    output=str(adapter_output),
+                )
+                for part in shlex.split(adapter_command)
+            ]
+        else:
+            command = ["make4ht", "-B", build_directory, disposable_input.name, tex4ht_options]
         result = subprocess.run(
-            ["make4ht", "-B", build_directory, disposable_input.name, tex4ht_options],
+            command,
             cwd=cwd,
             env=environment,
             capture_output=True,
@@ -272,7 +298,15 @@ def run_make4ht(
         )
         transcript = result.stdout + result.stderr
         errors = renderer_errors(transcript)
-        html_path = cwd / build_directory / f"{disposable_input.stem}.html"
+        try:
+            html_path = (
+                find_adapter_html(adapter_output, disposable_input.stem)
+                if adapter_command
+                else cwd / build_directory / f"{disposable_input.stem}.html"
+            )
+        except RuntimeError as error:
+            html_path = adapter_output / f"{disposable_input.stem}.html"
+            errors.append(str(error))
         if result.returncode != 0:
             errors.append(f"renderer exited with status {result.returncode}")
         if not html_path.is_file():
@@ -320,15 +354,23 @@ def main() -> int:
         "--build-command",
         help="Optional project build command run before rendering; use {input} for the manuscript filename",
     )
+    parser.add_argument(
+        "--adapter-command",
+        help=(
+            "Optional external renderer adapter command. It receives {project}, {input}, and {output}; "
+            "it must write one HTML file into {output}."
+        ),
+    )
     args = parser.parse_args()
     try:
-        run_make4ht(
+        run_renderer(
             args.project,
             args.project / args.input,
             args.output,
             args.texinputs,
             args.tex4ht_options,
             args.build_command,
+            args.adapter_command,
         )
     except (OSError, ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)

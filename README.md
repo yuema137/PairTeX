@@ -99,6 +99,15 @@ cross-reference artifacts before HTML conversion. The target project's build
 and renderer-specific path settings are supplied explicitly; PairTeX does not
 edit the target project to make a renderer work.
 
+## Renderer adapters
+
+The default renderer is `make4ht`, but TeX-to-HTML conversion is replaceable.
+Users can provide an external adapter command with `--adapter-command`; the
+command receives disposable `{project}`, `{input}`, and `{output}` paths and
+must write one HTML file into `{output}`. PairTeX retains common validation,
+source annotation, asset collection, and output publication around that
+adapter. See [`docs/renderer-adapters.md`](docs/renderer-adapters.md).
+
 ## Generic compatibility rule
 
 Every compatibility fix must be evaluated as a PairTeX capability for arbitrary
