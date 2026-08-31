@@ -82,7 +82,7 @@ users and agents consume the entries.
 ## Appearance
 
 The web view provides `System`, `Light`, and `Dark` color modes, plus the
-`Ocean`, `Sage`, and `Plum` accent palettes. Appearance preferences are stored
+`Ocean`, `Sage`, and `Nord` accent palettes. Appearance preferences are stored
 only in the local browser and do not affect the manuscript, renderer output,
 feedback entries, or source repository.
 
