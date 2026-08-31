@@ -4,7 +4,8 @@ Human-agent pair writing for LaTeX papers.
 
 PairTeX is a human-facing review layer for existing LaTeX repositories. LaTeX remains the single source of truth; HTML is a disposable reading and feedback view, and PDF remains the submission and layout verification view.
 
-PairTeX never modifies canonical manuscript source. Changes, comments, and
+PairTeX is deterministic and does not require an LLM, model API, or agent
+runtime. Changes, comments, and
 review actions in the HTML interface produce feedback output only. Users and
 their coding agents decide independently whether and how to use that output to
 modify `.tex` or `.bib` files.
@@ -77,6 +78,13 @@ content should be reported or kept read-only, not silently degraded.
 PairTeX writes only feedback and disposable render/build output. It does not
 apply feedback entries, edit source files, choose a coding agent, or define how
 users and agents consume the entries.
+
+## Appearance
+
+The web view provides `System`, `Light`, and `Dark` color modes, plus the
+`Ocean`, `Sage`, and `Plum` accent palettes. Appearance preferences are stored
+only in the local browser and do not affect the manuscript, renderer output,
+feedback entries, or source repository.
 
 ## Renderer probe
 

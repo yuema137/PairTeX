@@ -15,6 +15,26 @@ const state = {
   targetByEntryId: new Map(),
 };
 
+function initThemeControls() {
+  const root = document.documentElement;
+  const modeSelect = $("#theme-mode");
+  const paletteSelect = $("#theme-palette");
+  const mode = localStorage.getItem("pairtex-color-mode") || "system";
+  const palette = localStorage.getItem("pairtex-palette") || "ocean";
+  modeSelect.value = mode;
+  paletteSelect.value = palette;
+  const apply = () => {
+    if (modeSelect.value === "system") delete root.dataset.colorMode;
+    else root.dataset.colorMode = modeSelect.value;
+    root.dataset.palette = paletteSelect.value;
+    localStorage.setItem("pairtex-color-mode", modeSelect.value);
+    localStorage.setItem("pairtex-palette", paletteSelect.value);
+  };
+  modeSelect.addEventListener("change", apply);
+  paletteSelect.addEventListener("change", apply);
+  apply();
+}
+
 const $ = (selector) => document.querySelector(selector);
 
 function escapeHtml(value) {
@@ -580,6 +600,7 @@ async function saveEntry(event) {
 }
 
 async function init() {
+  initThemeControls();
   state.project = await (await fetch("/api/state")).json();
   const template = document.createElement("template");
   template.innerHTML = state.project.manuscript_html;

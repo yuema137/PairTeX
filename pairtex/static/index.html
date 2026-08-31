@@ -21,6 +21,24 @@
         <button class="save-edits" id="save-edits">Save edits</button>
         <button class="discard-edits" id="discard-edits">Discard edits</button>
         <div class="mode-hint" id="mode-hint">Direct edits are recorded as accepted intents.</div>
+        <div class="theme-controls" aria-label="Appearance">
+          <label class="theme-control">
+            <span class="sr-only">Color mode</span>
+            <select id="theme-mode">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+          <label class="theme-control">
+            <span class="sr-only">Color palette</span>
+            <select id="theme-palette">
+              <option value="ocean">Ocean</option>
+              <option value="sage">Sage</option>
+              <option value="plum">Plum</option>
+            </select>
+          </label>
+        </div>
         <div class="status" id="version-status">Loading version…</div>
       </div>
     </header>
