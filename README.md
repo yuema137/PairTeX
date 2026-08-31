@@ -66,6 +66,14 @@ python3 pairtex_render.py \
 The target project's renderer-specific path settings are supplied explicitly;
 PairTeX does not edit the target project to make a renderer work.
 
+## Generic compatibility rule
+
+Every compatibility fix must be evaluated as a PairTeX capability for arbitrary
+LaTeX projects. PairTeX code must not add SIDERIUS-specific file names, paths,
+macros, HTML selectors, or source assumptions. A fix that only helps one target
+belongs in a disposable renderer configuration or in the compatibility notes,
+not in the PairTeX runtime.
+
 Feedback entries use an `open` / `resolved` lifecycle. Resolving keeps the
 entry for history and records the source commit that addressed it; deleting
 removes the entry artifact entirely. An optional generic coding-agent workflow
