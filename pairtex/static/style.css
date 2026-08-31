@@ -52,6 +52,7 @@ button { cursor: pointer; }
 .paper .paper-meta { color: var(--muted); font-size: 14px; }
 .paper .equation { margin: 22px 0; padding: 16px; overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--card); text-align: center; font-family: var(--mono); }
 .paper figure { margin: 24px 0; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.paper img { display: block; width: auto !important; height: auto !important; max-width: 100%; margin-left: auto; margin-right: auto; }
 .paper figcaption { color: var(--muted); font-size: 13px; }
 .paper [data-source-file] { position: relative; border-radius: 3px; }
 .paper [data-source-file]:hover { background: var(--blue-soft); }
