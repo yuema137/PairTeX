@@ -38,11 +38,15 @@ function wrapTables() {
 }
 
 function cleanRendererArtifacts() {
-  document.querySelectorAll(".maketitle").forEach((title) => {
-    [...title.childNodes].forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE && /^\s*_+\s*$/.test(node.textContent || "")) node.remove();
-    });
-  });
+  const paper = $("#paper");
+  const walker = document.createTreeWalker(paper, NodeFilter.SHOW_TEXT);
+  const removable = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const beforeFirstSection = !node.parentElement?.closest("section, h2, h3, h4");
+    if (beforeFirstSection && /^\s*_+\s*$/.test(node.textContent || "")) removable.push(node);
+  }
+  removable.forEach((node) => node.remove());
 }
 
 function organizePaper() {

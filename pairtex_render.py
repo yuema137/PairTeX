@@ -210,6 +210,14 @@ def annotate_math_sources(
     html_path.write_text(html_text, encoding="utf-8")
 
 
+def normalize_html_document(html_path: Path) -> None:
+    """Drop renderer diagnostics accidentally emitted before the HTML document."""
+    html_text = html_path.read_text(encoding="utf-8")
+    doctype = html_text.lower().find("<!doctype html>")
+    if doctype > 0:
+        html_path.write_text(html_text[doctype:], encoding="utf-8")
+
+
 def run_make4ht(
     project: Path,
     input_path: Path,
@@ -271,6 +279,7 @@ def run_make4ht(
             errors.append(f"renderer did not produce {html_path.name}")
 
         if html_path.is_file():
+            normalize_html_document(html_path)
             search_roots = []
             for raw_root in (texinputs or "").split(os.pathsep):
                 if not raw_root:
