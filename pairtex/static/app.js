@@ -27,6 +27,16 @@ function panelId(name) {
   return `section-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "document"}`;
 }
 
+function wrapTables() {
+  document.querySelectorAll("#paper table:not(.equation)").forEach((table) => {
+    if (table.parentElement?.classList.contains("table-scroll")) return;
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-scroll";
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.append(table);
+  });
+}
+
 function organizePaper() {
   const paper = $("#paper");
   const children = [...paper.children];
@@ -557,6 +567,7 @@ async function init() {
   document.body.style.setProperty("margin", "0", "important");
   document.body.style.setProperty("padding", "0", "important");
   $("#paper").replaceChildren(...(sourceBody ? [...sourceBody.childNodes] : [...template.content.childNodes]));
+  wrapTables();
   organizePaper();
   captureEditBaselines();
   if (window.MathJax?.startup?.promise) {
