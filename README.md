@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # PairTeX
 
 ## Lightweight human-agent writing for any local LaTeX project
