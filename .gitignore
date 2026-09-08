@@ -1,3 +1,7 @@
 __pycache__/
 *.py[cod]
 .DS_Store
+
+# PairTeX run artifacts: feedback written into whatever project PairTeX targets,
+# including the bundled demos.
+.pairtex/
