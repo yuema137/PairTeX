@@ -19,6 +19,8 @@ import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 
+from pairtex import __version__
+
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 MATH_ENVIRONMENT = re.compile(
@@ -345,6 +347,7 @@ def run_renderer(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render a LaTeX project in a disposable copy")
+    parser.add_argument("--version", action="version", version=f"PairTeX {__version__}")
     parser.add_argument("--project", type=Path, required=True, help="Target LaTeX project")
     parser.add_argument("--input", type=Path, required=True, help="Manuscript root relative to --project")
     parser.add_argument("--output", type=Path, required=True, help="Directory receiving accepted HTML output")

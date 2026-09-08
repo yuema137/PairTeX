@@ -187,6 +187,22 @@ agent 报告说 HTML 已经重新生成了，就在 PairTeX 页面上点 `Refres
 适配器跑在项目的一份一次性拷贝上。PairTeX 只负责校验并发布 HTML 投影，绝不会为了
 让某个渲染器跑通就去改目标源码。
 
+## 开发
+
+PairTeX 只用标准库，所以 `python3 pairtex.py` 在任何一个受支持的解释器上直接就能
+跑，什么都不用装。`pyproject.toml` 管两件事：支持的 Python 范围，和发布版本号。
+uv 负责把开发环境固定在最低支持的那个版本上，省得本地解释器比较新、把不兼容的地方
+盖过去了。
+
+```sh
+uv sync
+uv run python -m unittest discover -s tests -t .
+```
+
+版本号只写在 `pyproject.toml` 这一个地方。`pairtex.py --version` 报的是
+`pairtex.__version__`，`tests/test_version.py` 盯着这两个，一对不上就直接挂。所以
+发版是改一个数再跑一遍测试，不会出现 tag 写一个版本、工具自己报另一个版本这种事。
+
 ## 项目边界
 
 PairTeX 是一个干净的、插上就走的层，不是 IDE，也不是 Overleaf 的替代品。它不提供

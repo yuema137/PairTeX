@@ -197,6 +197,24 @@ The adapter runs against a disposable project copy. PairTeX validates and
 publishes the HTML projection but never changes the target source to make a
 renderer work.
 
+## Development
+
+PairTeX runs on the standard library alone, so `python3 pairtex.py` works in any
+supported interpreter with nothing installed. `pyproject.toml` declares the
+supported Python range and the release version; uv gives everyone the same
+development environment, pinned to the minimum supported version so a newer
+local interpreter cannot hide an incompatibility.
+
+```sh
+uv sync
+uv run python -m unittest discover -s tests -t .
+```
+
+The version is written in exactly one place, `pyproject.toml`.
+`pairtex.py --version` reports it through `pairtex.__version__`, and
+`tests/test_version.py` fails if the two ever drift, so a release is one edit
+plus a test run rather than a hunt through the tree.
+
 ## Project boundary
 
 PairTeX is a clean drop-in layer, not an IDE or Overleaf replacement. It does
