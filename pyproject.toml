@@ -1,0 +1,23 @@
+[project]
+name = "pairtex"
+version = "0.1.0"
+description = "A local, Git-native review and feedback layer for existing LaTeX projects."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Yue Ma" }]
+keywords = ["latex", "tex", "paper-writing", "review", "coding-agent", "human-in-the-loop"]
+
+# PairTeX runs on the standard library alone, and that is a feature: you can
+# drop it next to an existing paper without pulling in a dependency tree.
+# Think hard before making this list non-empty.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/yuema137/PairTeX"
+Issues = "https://github.com/yuema137/PairTeX/issues"
+
+[tool.uv]
+# PairTeX is run as scripts from a checkout (`python3 pairtex.py ...`), not
+# installed as a library, so uv should not try to build it as a package.
+package = false

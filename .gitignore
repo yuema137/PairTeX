@@ -5,3 +5,6 @@ __pycache__/
 # PairTeX run artifacts: feedback written into whatever project PairTeX targets,
 # including the bundled demos.
 .pairtex/
+
+# uv-managed development virtualenv.
+.venv/
