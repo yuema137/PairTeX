@@ -6,10 +6,15 @@
 
 **Plug in locally. Keep your source. Use any coding agent.**
 
+Reviewing a paper with a coding agent usually means compiling a PDF, reading
+it, and copying quotes and comments back into a chat window by hand: the
+manuscript and the feedback never live in the same place. PairTeX closes that
+loop by rendering your existing LaTeX repository into an HTML view where you
+comment and edit in place, then recording every action as a structured
+feedback file your agent reads directly.
+
 PairTeX is a small, deterministic, hot-pluggable review layer for existing
-LaTeX projects. It turns a rendered manuscript into a readable interactive
-HTML artifact for human editing, review, and comments, then records those
-interactions as structured feedback artifacts for the user's coding agent.
+LaTeX projects.
 
 PairTeX does not replace the project, the compiler, Git, or the agent. The
 original LaTeX repository remains canonical and read-only from PairTeX's
