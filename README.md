@@ -217,6 +217,10 @@ The version is written in exactly one place, `pyproject.toml`.
 `tests/test_version.py` fails if the two ever drift, so a release is one edit
 plus a test run rather than a hunt through the tree.
 
+Before tagging a release, work through
+[`docs/release-checklist.md`](docs/release-checklist.md). It exists because a
+published tag should never have to move.
+
 ## Project boundary
 
 PairTeX is a clean drop-in layer, not an IDE or Overleaf replacement. It does
