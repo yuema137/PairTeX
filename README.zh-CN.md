@@ -205,6 +205,10 @@ uv run python -m unittest discover -s tests -t .
 `pairtex.__version__`，`tests/test_version.py` 盯着这两个，一对不上就直接挂。所以
 发版是改一个数再跑一遍测试，不会出现 tag 写一个版本、工具自己报另一个版本这种事。
 
+打 tag 之前先过一遍
+[`docs/release-checklist.md`](docs/release-checklist.md)。这份清单存在的理由就一
+条：已经发布出去的 tag 不该再动。
+
 ## 项目边界
 
 PairTeX 是一个干净的、插上就走的层，不是 IDE，也不是 Overleaf 的替代品。它不提供
