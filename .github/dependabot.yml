@@ -1,0 +1,21 @@
+version: 2
+
+updates:
+  # ci.yml pins actions to exact tags, which is reproducible but goes stale
+  # silently. Dependabot is what turns those pins back into a live decision.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    # One PR for all actions rather than one per action. CI runs the whole
+    # matrix on it, so a grouped bump is still fully checked.
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+# No Python ecosystem entry on purpose: pyproject.toml declares an empty
+# dependency list, so there is nothing for Dependabot to bump. Add one here if
+# PairTeX ever takes a real dependency.
