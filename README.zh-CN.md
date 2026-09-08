@@ -2,6 +2,8 @@
 
 # PairTeX
 
+[![CI](https://github.com/yuema137/PairTeX/actions/workflows/ci.yml/badge.svg)](https://github.com/yuema137/PairTeX/actions/workflows/ci.yml)
+
 ## 给任何本地 LaTeX 项目加一层轻量的人机协作写作
 
 **本地插上就能用。源码还是你自己的。agent 你自己挑。**

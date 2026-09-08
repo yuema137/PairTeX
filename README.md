@@ -2,6 +2,8 @@
 
 # PairTeX
 
+[![CI](https://github.com/yuema137/PairTeX/actions/workflows/ci.yml/badge.svg)](https://github.com/yuema137/PairTeX/actions/workflows/ci.yml)
+
 ## Lightweight human-agent writing for any local LaTeX project
 
 **Plug in locally. Keep your source. Use any coding agent.**

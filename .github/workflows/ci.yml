@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# The workflow only reads the checkout; it publishes nothing.
+permissions:
+  contents: read
+
+# A new push to the same branch makes the previous run irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # pyproject.toml claims requires-python = ">=3.11". Run the whole declared
+      # range so the claim is checked rather than assumed.
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      # Pinned to exact versions: astral-sh/setup-uv publishes no bare major
+      # alias past v7, and mixing pin styles in one file invites drift.
+      - uses: actions/checkout@v7.0.1
+
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - name: uv.lock is in sync with pyproject.toml
+        run: uv lock --check
+
+      - name: Run tests
+        run: uv run --python ${{ matrix.python-version }} python -m unittest discover -s tests -t . -v
+
+      - name: Entry points report the declared version
+        run: |
+          uv run --python ${{ matrix.python-version }} python pairtex.py --version
+          uv run --python ${{ matrix.python-version }} python pairtex_render.py --version
