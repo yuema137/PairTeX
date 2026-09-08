@@ -26,9 +26,11 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v7
+      # Pinned to exact versions: astral-sh/setup-uv publishes no bare major
+      # alias past v7, and mixing pin styles in one file invites drift.
+      - uses: actions/checkout@v7.0.1
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
 
