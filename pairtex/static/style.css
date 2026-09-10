@@ -61,9 +61,7 @@ button { cursor: pointer; }
 .paper { width: 100%; max-width: none; min-width: 0; }
 .paper-panel { display: none; }
 .paper-panel.is-active { display: block; }
-.paper.is-editing { padding: 20px 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
-.paper.is-editing [data-source-file] { outline: 1px dashed transparent; outline-offset: 7px; }
-.paper.is-editing [data-source-file]:hover, .paper.is-editing [data-source-file]:focus-within { outline-color: var(--border-hi); }
+.paper.is-editing [contenteditable="true"]:focus { outline: none; }
 .paper h1, .paper h2, .paper h3 { line-height: 1.25; letter-spacing: -.02em; }
 .paper h1 { font-size: 38px; }
 .paper h2 { margin-top: 2em; font-size: 25px; }
