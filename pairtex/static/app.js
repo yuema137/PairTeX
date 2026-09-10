@@ -196,7 +196,25 @@ function activatePaperPanel(target, selectedTab = null) {
 function markFallbackEditableText() {
   paperQueryAll("p").forEach((block) => {
     if (block.dataset.editable || block.closest(".thebibliography, figure, figcaption, .tableofcontents")) return;
-    if (block.querySelector("img, table, math, svg")) return;
+    if (block.querySelector("img, table, svg")) return;
+    if (block.querySelector("math, [data-editable=\"math\"]")) {
+      // Keep formulas independent while allowing surrounding prose to be edited.
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.textContent.trim() && !node.parentElement.closest('math, [data-editable="math"], [data-editable="text"]')) nodes.push(node);
+      }
+      nodes.forEach((node) => {
+        const span = document.createElement("span");
+        span.dataset.editable = "text";
+        span.dataset.sourceText = node.textContent.trim();
+        span.dataset.section = block.closest(".paper-panel")?.dataset.sectionName || "";
+        node.replaceWith(span);
+        span.append(node);
+      });
+      return;
+    }
     const text = block.innerText.trim();
     if (!text) return;
     block.dataset.editable = "text";
@@ -241,8 +259,12 @@ function renderedOffset(entry) {
   return offset >= 0 ? offset : Number.MAX_SAFE_INTEGER;
 }
 
+function manuscriptSelection() {
+  return state.paperShadow?.getSelection?.() || window.getSelection();
+}
+
 function selectedAnchor() {
-  const selection = window.getSelection();
+  const selection = manuscriptSelection();
   if (!selection || selection.isCollapsed || !selection.toString().trim()) return null;
   const node = selection.anchorNode?.parentElement?.closest("[data-source-file], [data-editable=\"text\"]");
   if (!node) return null;
@@ -268,7 +290,7 @@ function showTools() {
     return;
   }
   const anchor = selectedAnchor();
-  const selection = window.getSelection();
+  const selection = manuscriptSelection();
   if (!anchor || !selection?.rangeCount) {
     $("#selection-tools").hidden = true;
     return;
@@ -713,6 +735,8 @@ async function refreshView() {
   const host = $("#paper");
   if (!state.paperShadow) {
     state.paperShadow = host.attachShadow({ mode: "open" });
+    state.paperShadow.addEventListener("mouseup", showTools);
+    state.paperShadow.addEventListener("keyup", showTools);
     state.paperShadow.addEventListener("input", scheduleDirectEdit);
     state.paperShadow.addEventListener("click", (event) => {
       const math = event.target.closest('[data-editable="math"]');
@@ -776,6 +800,7 @@ async function refreshFromServer() {
   button.textContent = "Refreshing…";
   try {
     await refreshView();
+    setMode(state.mode);
   } catch (error) {
     alert(`Could not refresh the manuscript: ${error.message}`);
   } finally {
@@ -789,6 +814,7 @@ async function init() {
   await refreshView();
   setMode("edit");
   document.addEventListener("selectionchange", showTools);
+  $("#selection-tools").addEventListener("mousedown", (event) => event.preventDefault());
   $("#selection-tools").addEventListener("click", (event) => {
     const action = event.target.closest("button")?.dataset.action;
     if (action) openEntryDialog(action === "change" ? "change" : "comment");
