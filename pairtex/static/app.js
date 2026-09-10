@@ -512,6 +512,28 @@ async function typesetMath(element) {
   }
 }
 
+async function renderSourceMath() {
+  if (!window.MathJax?.startup?.promise) return;
+  await window.MathJax.startup.promise;
+  if (!window.MathJax.tex2mmlPromise) return;
+  const root = state.paperRoot;
+  for (const block of root.querySelectorAll('[data-math-source]')) {
+    const target = block.querySelector('.math-render');
+    if (!target || state.mathDirty.has(block)) continue;
+    const display = target.querySelector('math')?.getAttribute('display') === 'block';
+    const markup = await window.MathJax.tex2mmlPromise(block.dataset.mathSource, { display });
+    if (root !== state.paperRoot) return;
+    if (state.mathDirty.has(block)) continue;
+    const parsed = new DOMParser().parseFromString(markup, 'application/xml');
+    // A project's custom TeX macros may be unknown to MathJax. Preserve its
+    // renderer output rather than replacing it with an error in that case.
+    if (parsed.querySelector('merror, parsererror')) continue;
+    // Native MathML also works inside the paper's shadow root without
+    // depending on MathJax's document-level CHTML stylesheets.
+    target.replaceChildren(document.importNode(parsed.documentElement, true));
+  }
+}
+
 function renderMathPreview(source) {
   const preview = $("#math-preview");
   preview.textContent = `\\[${source}\\]`;
@@ -783,9 +805,7 @@ async function refreshView() {
   organizePaper();
   markFallbackEditableText();
   captureEditBaselines();
-  if (window.MathJax?.startup?.promise) {
-    window.MathJax.startup.promise.then(() => typesetMath(state.paperRoot)).catch(() => {});
-  }
+  await renderSourceMath();
   $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
   renderEntries(state.project.entries);
   decoratePaper(state.project.entries);
@@ -812,6 +832,7 @@ async function refreshFromServer() {
 async function init() {
   initThemeControls();
   await refreshView();
+  window.addEventListener('load', () => renderSourceMath().catch(console.error), { once: true });
   setMode("edit");
   document.addEventListener("selectionchange", showTools);
   $("#selection-tools").addEventListener("mousedown", (event) => event.preventDefault());

@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
   const project = mkdtempSync(join(tmpdir(), 'pairtex-browser-'));
   const html = process.env.PAIRTEX_TEST_HTML || join(project, 'main.html');
   writeFileSync(join(project, 'main.tex'), 'Browser regression fixture');
-  if (!process.env.PAIRTEX_TEST_HTML) writeFileSync(html, '<p>Editable prose <span data-source-file="main.tex" data-editable="math" data-math-source="x"><math><mi>x</mi></math></span> after the formula.</p>');
+  if (!process.env.PAIRTEX_TEST_HTML) writeFileSync(html, '<p>Editable prose <span data-source-file="main.tex" data-editable="math" data-math-source="x"><span class="math-render"><math>x</math></span></span> after the formula.</p>');
   const server = spawn(process.env.PYTHON || 'python3', [resolve('pairtex.py'), '--project', project, '--html', html, '--port', '0']);
   server.stderr.pipe(process.stderr);
   let browser;
@@ -28,8 +28,29 @@ const assert = require('node:assert/strict');
     await page.goto(url);
     const text = page.locator('#paper [data-editable="text"]').filter({visible:true}).first();
     await text.waitFor();
+    // Wait explicitly: otherwise a fast interaction test can finish before
+    // the asynchronous MathJax script exposes malformed renderer MathML.
+    await page.waitForFunction(() => Boolean(window.MathJax?.tex2mmlPromise));
+    const math = await page.evaluate(async () => {
+      await renderSourceMath();
+      const root = document.querySelector('#paper').shadowRoot;
+      return {
+        count: root.querySelectorAll('math').length,
+        errors: root.querySelectorAll('merror, mjx-merror, parsererror').length,
+        bareTokens: [...root.querySelectorAll('math, mrow')].some(node =>
+          [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && child.textContent.trim())),
+      };
+    });
+    assert(math.count > 0);
+    assert.equal(math.errors, 0);
+    assert.equal(math.bareTokens, false);
     const original = await text.innerText();
     await text.click();
+    assert.deepEqual(await text.evaluate(node => ({
+      outline: getComputedStyle(node).outlineStyle,
+      border: getComputedStyle(node.closest('.paper')).borderTopWidth,
+      editable: node.isContentEditable,
+    })), { outline: 'none', border: '0px', editable: true });
     await page.keyboard.press('Home');
     await page.keyboard.type('TEST ');
     await page.locator('#save-edits').click();
