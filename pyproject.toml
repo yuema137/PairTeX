@@ -1,6 +1,6 @@
 [project]
 name = "pairtex"
-version = "0.1.0"
+version = "0.1.1"
 description = "A local, Git-native review and feedback layer for existing LaTeX projects."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -212,10 +212,10 @@ uv sync
 uv run python -m unittest discover -s tests -t .
 ```
 
-The version is written in exactly one place, `pyproject.toml`.
-`pairtex.py --version` reports it through `pairtex.__version__`, and
-`tests/test_version.py` fails if the two ever drift, so a release is one edit
-plus a test run rather than a hunt through the tree.
+`pyproject.toml` declares the release version. When preparing a release, update
+that version and `__version__` in `pairtex.py`, then run `uv lock` to refresh
+`uv.lock`. Both entry points report `pairtex.__version__`;
+`tests/test_version.py` fails if it differs from the declared version.
 
 Before tagging a release, work through
 [`docs/release-checklist.md`](docs/release-checklist.md). It exists because a
