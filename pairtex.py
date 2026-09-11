@@ -24,7 +24,7 @@ from pairtex_validation import validate_rendered_html
 
 # Single source of truth is pyproject.toml; tests/test_version.py fails if the
 # two drift apart.
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "pairtex" / "static"

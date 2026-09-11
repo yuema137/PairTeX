@@ -201,9 +201,9 @@ uv sync
 uv run python -m unittest discover -s tests -t .
 ```
 
-版本号只写在 `pyproject.toml` 这一个地方。`pairtex.py --version` 报的是
-`pairtex.__version__`，`tests/test_version.py` 盯着这两个，一对不上就直接挂。所以
-发版是改一个数再跑一遍测试，不会出现 tag 写一个版本、工具自己报另一个版本这种事。
+`pyproject.toml` 声明发布版本。准备发版时，需要同步更新它和 `pairtex.py` 中的
+`__version__`，再运行 `uv lock` 更新 `uv.lock`。两个命令行入口都通过
+`pairtex.__version__` 报告版本；`tests/test_version.py` 会检查它是否与声明的版本一致。
 
 打 tag 之前先过一遍
 [`docs/release-checklist.md`](docs/release-checklist.md)。这份清单存在的理由就一
