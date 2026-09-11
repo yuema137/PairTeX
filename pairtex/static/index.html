@@ -8,7 +8,7 @@
     <script>
       window.MathJax = { tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] }, startup: { typeset: false } };
     </script>
-    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="mathjax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
     <header class="topbar">
@@ -46,6 +46,8 @@
 
     <main class="layout">
       <article class="paper-shell">
+        <p class="help" id="math-status" role="status" hidden></p>
+        <p class="help" id="mapping-status" role="status" hidden></p>
         <nav class="paper-tabs" id="paper-tabs" aria-label="Manuscript sections"></nav>
         <article class="paper" id="paper" aria-label="Rendered manuscript"></article>
       </article>
