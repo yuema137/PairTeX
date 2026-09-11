@@ -239,7 +239,11 @@ The minimum conceptual record is:
 ```
 
 `head_commit` identifies the current Git revision, while `worktree_dirty`
-states whether uncommitted changes were present. File, section, quoted text,
+states whether uncommitted changes were present. Both fields may be `null`: no commit is
+known, or worktree status could not be determined. `git_status` distinguishes
+`not_repository`, `unborn`, `clean`, `dirty`, and `unavailable`; feedback preserves
+this state from the review view. Older feedback may omit `git_status` and use
+`"uncommitted"` as a placeholder; it must not be interpreted as a Git revision. File, section, quoted text,
 surrounding context, and line hints identify the target within the observed
 content. Line numbers are hints, not identity. PairTeX may report an entry as
 potentially stale, but does not decide how a user or agent should reconcile it.

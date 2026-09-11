@@ -136,6 +136,13 @@ class PairTeXLoopTest(unittest.TestCase):
         self.assertEqual(refreshed_by_id[saved_review["id"]]["status"], "resolved")
         self.assertEqual(refreshed_by_id[saved_comment["id"]]["thread"][0]["role"], "agent")
 
+    def test_refresh_rejects_new_invalid_math(self) -> None:
+        self.html_path.write_text('<math>x</math>', encoding="utf-8")
+        status, result = self.request("GET", "/api/state?refresh=invalid")
+        self.assertEqual(status, 422)
+        self.assertIn("structurally unusable", result["error"])
+        self.assertEqual(self.source_path.read_text(encoding="utf-8"), self.source_before)
+
     def test_complex_unverified_comment_stays_open_with_agent_reply(self) -> None:
         entry = {
             "kind": "comment",

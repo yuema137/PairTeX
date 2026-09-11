@@ -241,10 +241,17 @@ function sortEntries(entries) {
   });
 }
 
-function renderedOffset(entry) {
-  const storedOffset = entry.anchor?.rendered_offset;
-  if (Number.isFinite(storedOffset) && storedOffset >= 0) return storedOffset;
-  const target = paperQueryAll("[data-source-file], [data-editable=\"text\"]").find((node) => {
+function entryTarget(entry) {
+  if (entry.anchor?.source_mapping === "unmapped") {
+    const selected = entry.anchor.selected_rendered_text?.trim().normalize("NFKC");
+    if (!selected) return null;
+    const candidates = paperQueryAll('[data-source-mapping="unmapped"]').filter(node =>
+      node.textContent.normalize("NFKC").includes(selected)
+      && (node.closest('.paper-panel')?.dataset.sectionName || '') === (entry.anchor.section || []).join('/'));
+    // Repeated expressions need stronger evidence; do not highlight an unrelated block.
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+  return paperQueryAll("[data-source-file], [data-editable=\"text\"]").find((node) => {
     const section = (node.dataset.section || "").split("/").filter(Boolean);
     const fileMatches = entry.anchor?.file_hint
       ? node.dataset.sourceFile === entry.anchor.file_hint
@@ -252,6 +259,12 @@ function renderedOffset(entry) {
     return fileMatches
       && section.join("/") === (entry.anchor?.section || []).join("/");
   });
+}
+
+function renderedOffset(entry) {
+  const storedOffset = entry.anchor?.rendered_offset;
+  if (Number.isFinite(storedOffset) && storedOffset >= 0) return storedOffset;
+  const target = entryTarget(entry);
   if (!target) return Number.MAX_SAFE_INTEGER;
   const text = target.textContent.trim();
   const selected = (entry.anchor?.selected_rendered_text || "").trim();
@@ -266,18 +279,19 @@ function manuscriptSelection() {
 function selectedAnchor() {
   const selection = manuscriptSelection();
   if (!selection || selection.isCollapsed || !selection.toString().trim()) return null;
-  const node = selection.anchorNode?.parentElement?.closest("[data-source-file], [data-editable=\"text\"]");
+  const node = selection.anchorNode?.parentElement?.closest("[data-source-file], [data-editable=\"text\"], [data-source-mapping=\"unmapped\"]");
   if (!node) return null;
   const text = selection.toString().trim();
   const blockText = node.textContent.trim();
   const index = blockText.indexOf(text);
   return {
     file_hint: node.dataset.sourceFile || null,
+    source_mapping: node.dataset.sourceMapping || undefined,
     line_start_hint: Number(node.dataset.sourceLine || 0) || null,
     line_end_hint: Number(node.dataset.sourceLineEnd || node.dataset.sourceLine || 0) || null,
-    section: (node.dataset.section || "").split("/").filter(Boolean),
+    section: (node.dataset.section || (node.dataset.sourceMapping === "unmapped" ? node.closest(".paper-panel")?.dataset.sectionName : "") || "").split("/").filter(Boolean),
     selected_rendered_text: text,
-    selected_source_text: node.dataset.sourceText || text,
+    selected_source_text: node.dataset.sourceMapping === "unmapped" ? null : node.dataset.sourceText || text,
     rendered_offset: index >= 0 ? index : null,
     prefix_context: index > 0 ? blockText.slice(Math.max(0, index - 80), index) : "",
     suffix_context: index >= 0 ? blockText.slice(index + text.length, index + text.length + 80) : "",
@@ -377,21 +391,14 @@ async function saveThreadReply(event) {
 function decoratePaper(entries) {
   const orderedEntries = sortEntries(entries.filter((entry) => entry.status !== "resolved"));
   state.targetByEntryId.clear();
-  paperQueryAll("[data-source-file], [data-editable=\"text\"]").forEach((node) => {
+  paperQueryAll("[data-source-file], [data-editable=\"text\"], [data-source-mapping=\"unmapped\"]").forEach((node) => {
     node.classList.remove("has-feedback", "has-number", "is-focused");
     node.removeAttribute("data-feedback-id");
     node.removeAttribute("data-feedback-number");
   });
   let changeNumber = 0;
   orderedEntries.forEach((entry) => {
-    const target = paperQueryAll("[data-source-file], [data-editable=\"text\"]").find((node) => {
-      const section = (node.dataset.section || "").split("/").filter(Boolean);
-      const fileMatches = entry.anchor?.file_hint
-        ? node.dataset.sourceFile === entry.anchor.file_hint
-        : !node.dataset.sourceFile;
-      return fileMatches
-        && section.join("/") === (entry.anchor?.section || []).join("/");
-    });
+    const target = entryTarget(entry);
     if (target) {
       target.classList.add("has-feedback");
       state.targetByEntryId.set(entry.id, target);
@@ -464,6 +471,7 @@ async function persistDirectEdit(block) {
     decision: "accepted",
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
+    git_status: state.project.git_status,
     author: state.project.author || undefined,
     anchor: {
       file_hint: block.dataset.sourceFile,
@@ -513,15 +521,28 @@ async function typesetMath(element) {
 }
 
 async function renderSourceMath() {
+  const notice = $("#math-status");
+  notice.hidden = !state.paperRoot?.querySelector('math, [data-editable="math"]');
+  notice.textContent = "Math converter unavailable or still loading. Showing the renderer's original formulas; edited formulas use TeX source until it loads. Check your connection and refresh to retry.";
   if (!window.MathJax?.startup?.promise) return;
-  await window.MathJax.startup.promise;
+  try {
+    await window.MathJax.startup.promise;
+  } catch {
+    return;
+  }
   if (!window.MathJax.tex2mmlPromise) return;
+  notice.hidden = true;
   const root = state.paperRoot;
   for (const block of root.querySelectorAll('[data-math-source]')) {
     const target = block.querySelector('.math-render');
     if (!target || state.mathDirty.has(block)) continue;
     const display = target.querySelector('math')?.getAttribute('display') === 'block';
-    const markup = await window.MathJax.tex2mmlPromise(block.dataset.mathSource, { display });
+    let markup;
+    try {
+      markup = await window.MathJax.tex2mmlPromise(block.dataset.mathSource, { display });
+    } catch {
+      continue; // A converter failure must not remove the renderer's fallback.
+    }
     if (root !== state.paperRoot) return;
     if (state.mathDirty.has(block)) continue;
     const parsed = new DOMParser().parseFromString(markup, 'application/xml');
@@ -581,6 +602,7 @@ async function persistMathEdit(block) {
     decision: "accepted",
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
+    git_status: state.project.git_status,
     author: state.project.author || undefined,
     anchor: {
       file_hint: block.dataset.sourceFile,
@@ -713,6 +735,7 @@ async function saveEntry(event) {
     decision: kind === "change" ? (state.mode === "edit" ? "accepted" : "pending") : null,
     head_commit: state.project.head_commit,
     worktree_dirty: state.project.worktree_dirty,
+    git_status: state.project.git_status,
     author: state.project.author || undefined,
     anchor: state.selection,
     payload: {},
@@ -748,7 +771,9 @@ async function saveEntry(event) {
 }
 
 async function refreshView() {
-  const project = await (await fetch(`/api/state?refresh=${Date.now()}`, { cache: "no-store" })).json();
+  const response = await fetch(`/api/state?refresh=${Date.now()}`, { cache: "no-store" });
+  const project = await response.json();
+  if (!response.ok) throw new Error(project.error || "Could not read the manuscript");
   state.project = project;
   const template = document.createElement("template");
   template.innerHTML = state.project.manuscript_html;
@@ -805,8 +830,11 @@ async function refreshView() {
   organizePaper();
   markFallbackEditableText();
   captureEditBaselines();
-  await renderSourceMath();
-  $("#version-status").textContent = state.project.worktree_dirty ? "Local changes" : "Git version tracked";
+  const unmapped = renderRoot.querySelector('[data-source-mapping="unmapped"]');
+  $("#mapping-status").hidden = !unmapped;
+  $("#mapping-status").textContent = "Formulas are read-only because their source locations could not be verified. You can select them for comments. Use a renderer adapter with source anchors to enable formula editing.";
+  renderSourceMath().catch(console.error);
+  $("#version-status").textContent = ({ not_repository: "Not under Git", unborn: "No source commit yet", clean: "Git version tracked", dirty: "Local changes", unavailable: "Git status unavailable" })[state.project.git_status] || "Git status unavailable";
   renderEntries(state.project.entries);
   decoratePaper(state.project.entries);
 }

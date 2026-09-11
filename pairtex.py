@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import os
 import subprocess
 import sys
 import uuid
@@ -64,13 +65,38 @@ def git_value(project: Path, *args: str, fallback: str = "") -> str:
 
 
 def project_state(project: Path) -> dict[str, object]:
-    head = git_value(project, "rev-parse", "HEAD", fallback="uncommitted")
-    dirty = bool(git_value(project, "status", "--porcelain"))
+    def git(*args: str):
+        return subprocess.run(
+            ["git", "-C", str(project), *args], capture_output=True, text=True,
+            env={**os.environ, "LC_ALL": "C"},
+        )
+
+    head = None
+    dirty = None
+    git_status = "unavailable"
+    try:
+        probe = git("rev-parse", "--is-inside-work-tree")
+        if probe.returncode and "not a git repository" in probe.stderr.lower():
+            git_status = "not_repository"
+        elif probe.returncode == 0 and probe.stdout.strip() == "true":
+            revision = git("rev-parse", "--verify", "--quiet", "HEAD")
+            status = git("status", "--porcelain")
+            if revision.returncode == 0:
+                head = revision.stdout.strip()
+            if status.returncode == 0:
+                dirty = bool(status.stdout.strip())
+                if head:
+                    git_status = "dirty" if dirty else "clean"
+                elif revision.returncode == 1 and git("symbolic-ref", "-q", "HEAD").returncode == 0:
+                    git_status = "unborn"
+    except OSError:
+        pass
     author = git_value(project, "config", "user.name") or None
     return {
         "project": str(project),
         "head_commit": head,
         "worktree_dirty": dirty,
+        "git_status": git_status,
         "author": author,
     }
 
@@ -96,6 +122,7 @@ class App:
 
     def state(self) -> dict[str, object]:
         html = self.html_path.read_text(encoding="utf-8")
+        validate_rendered_html(html)
         return {
             **project_state(self.project),
             "manuscript_html": html,
@@ -142,7 +169,13 @@ class Handler(BaseHTTPRequestHandler):
             self.send_bytes(body, "text/html; charset=utf-8")
             return
         if path == "/api/state":
-            body = json.dumps(self.app.state(), ensure_ascii=False).encode("utf-8")
+            try:
+                state = self.app.state()
+            except (OSError, ValueError) as error:
+                body = json.dumps({"error": str(error)}).encode("utf-8")
+                self.send_bytes(body, "application/json; charset=utf-8", HTTPStatus.UNPROCESSABLE_ENTITY)
+                return
+            body = json.dumps(state, ensure_ascii=False).encode("utf-8")
             self.send_bytes(body, "application/json; charset=utf-8")
             return
         if path == "/theme.js":

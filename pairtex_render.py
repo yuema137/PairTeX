@@ -18,8 +18,10 @@ import sys
 import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from pairtex import __version__
+from pairtex_validation import validate_rendered_html
 
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -40,9 +42,36 @@ class AssetParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
-        source = attributes.get("src")
-        if source and not source.startswith(("http://", "https://", "data:", "#")):
-            self.sources.append(source.split("?", 1)[0].split("#", 1)[0])
+        for attribute in ("src", "href"):
+            source = attributes.get(attribute)
+            if not source:
+                continue
+            url = urlsplit(source)
+            if url.scheme == "file":
+                raise ValueError(f"unsafe local HTML asset: {source}")
+            if url.scheme or url.netloc or not url.path:
+                continue
+            path = unquote(url.path)
+            if path.startswith("/") or "\\" in path or ".." in Path(path).parts or "\x00" in path:
+                raise ValueError(f"unsafe local HTML asset: {source}")
+            self.sources.append(path)
+
+
+class MathAnnotationParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.has_annotations = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if dict(attrs).get("data-editable") == "math":
+            self.has_annotations = True
+
+
+def asset_path(root: Path, source: str) -> Path:
+    path = root / source
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise ValueError(f"HTML asset escapes permitted directory: {source}")
+    return path
 
 
 def renderer_errors(output: str) -> list[str]:
@@ -58,7 +87,7 @@ def renderer_errors(output: str) -> list[str]:
 
 
 def missing_assets(html_path: Path, sources: list[str]) -> list[str]:
-    return sorted({source for source in sources if not (html_path.parent / source).is_file()})
+    return sorted({source for source in sources if not asset_path(html_path.parent, source).is_file()})
 
 
 def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -> None:
@@ -67,10 +96,11 @@ def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -
         if not source.lower().endswith(".png"):
             continue
         basename = Path(source).stem.removesuffix("-")
-        pdf_candidates = sorted(project.rglob(f"{basename}.pdf"))
+        pdf_candidates = sorted(path for path in project.rglob(f"{basename}.pdf")
+                                if path.resolve().is_relative_to(project.resolve()))
         if not pdf_candidates:
             continue
-        destination = html_path.parent / source
+        destination = asset_path(html_path.parent, source)
         destination.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             ["magick", "-density", "144", f"{pdf_candidates[0]}[0]", str(destination)],
@@ -83,10 +113,10 @@ def materialize_pdf_assets(project: Path, html_path: Path, sources: list[str]) -
 def materialize_project_assets(project: Path, html_path: Path, sources: list[str]) -> None:
     """Copy source assets referenced by the renderer into the disposable output."""
     for source in missing_assets(html_path, sources):
-        candidate = project / source
+        candidate = asset_path(project, source)
         if not candidate.is_file():
             continue
-        destination = html_path.parent / source
+        destination = asset_path(html_path.parent, source)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(candidate, destination)
 
@@ -125,14 +155,18 @@ def source_math(
         return []
     seen.add(path)
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    first_line = 1
     if root:
         try:
             start = next(index for index, line in enumerate(lines) if "\\begin{document}" in line) + 1
-            lines = lines[start:]
+            # Retain text on the document-opening line and its real source line.
+            lines = lines[start - 1:]
+            lines[0] = lines[0].split("\\begin{document}", 1)[1]
+            first_line = start
         except StopIteration:
             pass
     expanded: list[dict[str, object]] = []
-    for line_number, raw_line in enumerate(lines, start=1):
+    for line_number, raw_line in enumerate(lines, start=first_line):
         line = strip_tex_comment(raw_line)
         input_match = INPUT_COMMAND.fullmatch(line.strip())
         if input_match:
@@ -180,6 +214,8 @@ def source_lines(
             if included and included not in seen:
                 seen.add(included)
                 lines.extend(source_lines(project, included, seen, search_roots))
+            else:
+                lines.append({"text": line, "file": path, "line": line_number})
         else:
             lines.append({"text": line, "file": path, "line": line_number})
     return lines
@@ -191,15 +227,40 @@ def annotate_math_sources(
     html_path: Path,
     search_roots: list[Path] | None = None,
 ) -> None:
-    math_sources = source_math(project, input_path, root=True, search_roots=search_roots)
     html_text = html_path.read_text(encoding="utf-8")
+    # Adapters providing explicit anchors own their source mapping.
+    annotations = MathAnnotationParser()
+    annotations.feed(html_text)
+    if annotations.has_annotations:
+        return
+    expanded = source_lines(project, input_path, {input_path.resolve()}, search_roots)
+    source_text = "\n".join(str(item["text"]) for item in expanded)
+    # A static scan is not TeX execution. Even equal counts can pair different
+    # formulas when conditionals, bibliographies or macro expansion are involved.
+    uncertain = bool(re.search(
+        r"\\(?:if\w*|else|fi|bibliography|printbibliography|addbibresource|"
+        r"def|edef|gdef|xdef|newcommand|renewcommand|providecommand|"
+        r"newenvironment|renewenvironment|input|include|includeonly)\b", source_text
+    ))
+    try:
+        math_sources = [] if uncertain else source_math(project, input_path, root=True, search_roots=search_roots)
+    except ValueError:
+        # Sources found through TEXINPUTS may live outside the canonical project.
+        uncertain, math_sources = True, []
     math_pattern = re.compile(r"<math\b[^>]*>.*?</math>", re.DOTALL | re.IGNORECASE)
     rendered_math = list(math_pattern.finditer(html_text))
-    if len(math_sources) != len(rendered_math):
-        raise RuntimeError(
-            "Math source mapping rejected: "
-            f"found {len(math_sources)} source formulas but {len(rendered_math)} rendered formulas"
-        )
+    if uncertain or len(math_sources) != len(rendered_math):
+        if rendered_math:
+            reason = "TeX expansion requires renderer-provided anchors" if uncertain else "source and rendered formula counts differ"
+            print(f"Math source mapping unavailable: {reason}; formulas remain read-only. "
+                  "Use an adapter with explicit source anchors to enable formula editing.", file=sys.stderr)
+            for match in reversed(rendered_math):
+                wrapper = ('<span class="pairtex-math" data-source-mapping="unmapped" contenteditable="false" '
+                           'title="Read-only formula: source mapping unavailable">'
+                           + match.group(0) + '</span>')
+                html_text = html_text[:match.start()] + wrapper + html_text[match.end():]
+            html_path.write_text(html_text, encoding="utf-8")
+        return
     for match, item in reversed(list(zip(rendered_math, math_sources))):
         source = html.escape(str(item["source"]), quote=True)
         wrapper = (
@@ -315,6 +376,8 @@ def run_renderer(
             errors.append(f"renderer did not produce {html_path.name}")
 
         if html_path.is_file():
+            if not html_path.resolve().is_relative_to(disposable.resolve()):
+                raise ValueError("Renderer HTML escapes disposable project")
             normalize_html_document(html_path)
             search_roots = []
             for raw_root in (texinputs or "").split(os.pathsep):
@@ -323,6 +386,7 @@ def run_renderer(
                 root = Path(raw_root.removesuffix("//"))
                 search_roots.append((cwd / root).resolve() if not root.is_absolute() else root.resolve())
             annotate_math_sources(disposable, disposable_input, html_path, search_roots)
+            validate_rendered_html(html_path.read_text(encoding="utf-8"))
             parser = AssetParser()
             parser.feed(html_path.read_text(encoding="utf-8", errors="replace"))
             materialize_project_assets(disposable, html_path, parser.sources)
@@ -334,15 +398,15 @@ def run_renderer(
             raise RuntimeError("Renderer output rejected:\n" + "\n".join(f"- {error}" for error in errors))
 
         output.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(html_path, output / html_path.name)
+        # Check every destination before publishing any files, including existing symlinks.
+        for source in [html_path.name, *parser.sources]:
+            asset_path(output, source)
+        shutil.copy2(html_path, asset_path(output, html_path.name))
         for source in parser.sources:
-            source_path = html_path.parent / source
-            destination = output / source
+            source_path = asset_path(html_path.parent, source)
+            destination = asset_path(output, source)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, destination)
-        css_files = sorted(html_path.parent.glob("*.css"))
-        for css_path in css_files:
-            shutil.copy2(css_path, output / css_path.name)
 
 
 def main() -> int:
