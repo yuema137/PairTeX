@@ -76,8 +76,19 @@ installation and a browser, with `NODE_PATH` pointing to its `node_modules`:
 ```sh
 node tests/browser-regressions.cjs
 node tests/browser-interactions.cjs
+node tests/browser-math-labels.cjs
 ```
 
 Set `PAIRTEX_BROWSER_CHANNEL=chrome` to use installed Chrome. The regression suite
 intercepts MathJax loading to test success, delay, and failure deterministically;
 the interaction suite also exercises the real CDN converter.
+
+The math-label browser suite uses the real MathJax 3 CDN and verifies labelled
+and unlabelled previews, reopening, repeated input, document references, and
+complete labels in saved feedback. Draft previews and edited formula rendering
+use a fresh TeX input instance and a separate MathDocument for each conversion.
+The draft instance copies document references, treats label commands as
+presentation-only, and never resets the document's label state. Complete source
+(including labels) remains in the editor and feedback. This integration uses the
+constructors and conversion machinery exposed by the MathJax 3 startup component;
+rerun the browser suites when changing the MathJax major version.
