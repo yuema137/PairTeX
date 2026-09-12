@@ -514,10 +514,38 @@ function scheduleDirectEdit(event) {
   updateSaveButton();
 }
 
-async function typesetMath(element) {
-  if (window.MathJax?.typesetPromise) {
-    await window.MathJax.typesetPromise([element]);
-  }
+// Each draft conversion owns its TeX state. Never reset the paper's labels or
+// redefine commands in its input jax: MathJax 3 can retain macro definitions.
+let draftMathQueue = Promise.resolve();
+let mathPreviewRevision = 0;
+
+function renderDraftMath(source, display = true) {
+  const task = draftMathQueue.then(async () => {
+    const mathjax = window.MathJax;
+    if (!mathjax?.startup?.promise) return null;
+    await mathjax.startup.promise;
+    const startup = mathjax.startup;
+    const original = startup.document?.inputJax.find(jax => jax.name === "TeX");
+    if (!original || !startup.handler || !mathjax._?.mathjax?.mathjax) return null;
+    const input = new original.constructor({
+      ...mathjax.config.tex,
+      packages: [...original.options.packages],
+      // Labels belong to canonical equations, not their transient previews.
+      macros: {...mathjax.config.tex.macros, label: ["", 1]},
+    });
+    const doc = startup.handler.create(document.implementation.createHTMLDocument(""), {InputJax: [input]});
+    input.parseOptions.tags.allLabels = Object.fromEntries(
+      Object.entries(original.parseOptions.tags.allLabels).map(([key, value]) => [key, {...value}]),
+    );
+    const markup = await mathjax._.mathjax.mathjax.handleRetriesFor(() =>
+      startup.toMML(doc.convert(source, {display, end: mathjax._.core.MathItem.STATE.CONVERT})),
+    );
+    const parsed = new DOMParser().parseFromString(markup, "application/xml");
+    if (parsed.querySelector("parsererror")) throw new Error("Could not render formula preview");
+    return document.importNode(parsed.documentElement, true);
+  });
+  draftMathQueue = task.catch(() => {});
+  return task;
 }
 
 async function renderSourceMath() {
@@ -555,10 +583,21 @@ async function renderSourceMath() {
   }
 }
 
-function renderMathPreview(source) {
+async function renderMathPreview(source) {
   const preview = $("#math-preview");
-  preview.textContent = `\\[${source}\\]`;
-  typesetMath(preview).catch(() => {});
+  const revision = ++mathPreviewRevision;
+  preview.textContent = source;
+  preview.dataset.renderState = "pending";
+  try {
+    const math = await renderDraftMath(source);
+    if (revision !== mathPreviewRevision) return;
+    if (math) preview.replaceChildren(math);
+    preview.dataset.renderState = math ? "ready" : "source";
+  } catch (error) {
+    if (revision !== mathPreviewRevision) return;
+    preview.textContent = `${source} — Preview unavailable: ${error.message}`;
+    preview.dataset.renderState = "error";
+  }
 }
 
 function openMathEditor(block) {
@@ -584,9 +623,19 @@ async function saveMathEdit(event) {
     state.mathBlock = null;
     return;
   }
+  const revision = mathPreviewRevision;
+  const target = block.querySelector(".math-render");
+  const display = target.querySelector("math")?.getAttribute("display") === "block";
+  let math = null;
+  try {
+    math = await renderDraftMath(source, display);
+  } catch {
+    // Keep the complete draft readable and saveable when conversion fails.
+  }
+  if (state.mathBlock !== block || revision !== mathPreviewRevision || !block.isConnected) return;
   block.dataset.mathSource = source;
-  block.querySelector(".math-render").textContent = `\\[${source}\\]`;
-  await typesetMath(block.querySelector(".math-render"));
+  if (math) target.replaceChildren(math);
+  else target.textContent = source;
   state.mathDirty.add(block);
   updateSaveButton();
   $("#math-dialog").close();
@@ -609,8 +658,8 @@ async function persistMathEdit(block) {
       line_start_hint: Number(block.dataset.sourceLine || 0) || null,
       line_end_hint: Number(block.dataset.sourceLineEnd || block.dataset.sourceLine || 0) || null,
       section: (block.dataset.section || "").split("/").filter(Boolean),
-      selected_rendered_text: state.mathBaseline,
-      selected_source_text: state.mathBaseline,
+      selected_rendered_text: state.mathSourceBaselines.get(block) || "",
+      selected_source_text: state.mathSourceBaselines.get(block) || "",
       rendered_offset: 0,
       prefix_context: "",
       suffix_context: "",
@@ -874,6 +923,10 @@ async function init() {
   $("#refresh-view").addEventListener("click", refreshFromServer);
   $("#math-source").addEventListener("input", (event) => renderMathPreview(event.target.value));
   $("#math-form").addEventListener("submit", saveMathEdit);
+  $("#math-dialog").addEventListener("close", () => {
+    ++mathPreviewRevision;
+    state.mathBlock = null;
+  });
   $("#cancel-math").addEventListener("click", () => {
     state.mathBlock = null;
     $("#math-dialog").close();
