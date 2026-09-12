@@ -91,6 +91,55 @@ const assert = require('node:assert/strict');
     }
     assert.deepEqual(await documentState(), before);
     assert.equal(readFileSync(join(project, 'main.tex'), 'utf8'), sources.join('\n'));
+    // Exercise the conversion mechanism beyond the issue's a+b=c example.
+    const variants = await page.evaluate(async () => {
+      const cases = [
+        [String.raw`\frac{x_1}{\sqrt{y}}\label{fraction:any-name}`, false],
+        [String.raw`\begin{aligned}a&=b\label{row:first}\\c&=d\label{row:second}\end{aligned}`, true],
+        [String.raw`\begin{equation}p=q\label{env:equation}\end{equation}`, true],
+        [String.raw`u=v\label {eq:unicode-α}`, true],
+        [String.raw`\newcommand{\pairtexDraftOnly}{q}\pairtexDraftOnly\label{macro:local}`, true],
+      ];
+      const results = [];
+      for (const [source, display] of cases) {
+        const math = await renderDraftMath(source, display);
+        results.push({source, text: math.textContent, display: math.getAttribute('display'),
+          errors: math.querySelectorAll('merror, [data-mjx-error]').length});
+      }
+      const previousMacros = MathJax.config.tex.macros;
+      try {
+        MathJax.config.tex.macros = {...previousMacros, pairtexConfigured: ['#1+#1', 1]};
+        const math = await renderDraftMath(String.raw`\pairtexConfigured{t}\label{macro:configured}`);
+        results.push({source: 'configured macro', text: math.textContent,
+          errors: math.querySelectorAll('merror, [data-mjx-error]').length});
+      } finally {
+        if (previousMacros === undefined) delete MathJax.config.tex.macros;
+        else MathJax.config.tex.macros = previousMacros;
+      }
+      // A failed conversion must not poison subsequent queued work.
+      const runtime = MathJax._.mathjax.mathjax;
+      const retry = runtime.handleRetriesFor;
+      let rejected = false;
+      try {
+        runtime.handleRetriesFor = () => Promise.reject(new Error('Synthetic conversion failure'));
+        await renderDraftMath('x');
+      } catch { rejected = true; }
+      finally { runtime.handleRetriesFor = retry; }
+      const recovered = await renderDraftMath(String.raw`h=k\label{queue:recovered}`);
+      return {results, rejected, recovered: recovered.textContent,
+        recoveredErrors: recovered.querySelectorAll('merror, [data-mjx-error]').length};
+    });
+    for (const result of variants.results) {
+      assert.equal(result.errors, 0, result.source);
+      assert(result.text.trim(), result.source);
+    }
+    assert.notEqual(variants.results[0].display, 'block');
+    assert.equal(variants.results[1].display, 'block');
+    assert.equal(variants.results.at(-1).text.replace(/\s/g, ''), 't+t');
+    assert(variants.rejected);
+    assert.equal(variants.recovered.replace(/\s/g, ''), 'h=k');
+    assert.equal(variants.recoveredErrors, 0);
+    assert.deepEqual(await documentState(), before);
     // Draft-only macro definitions must not have disabled real label handling.
     assert(await page.evaluate(async () => {
       await MathJax.tex2mmlPromise(String.raw`r=s\label{eq:after-preview}`);
