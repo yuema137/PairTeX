@@ -30,7 +30,7 @@ jobs:
       # alias past v7, and mixing pin styles in one file invites drift.
       - uses: actions/checkout@v7.0.1
 
-      - uses: astral-sh/setup-uv@v10.0.1
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
